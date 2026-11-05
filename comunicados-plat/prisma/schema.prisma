@@ -1,0 +1,81 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Departamento {
+  idDepartamento String    @id @default(uuid()) @map("id_departamento") @db.Uuid
+  nombre         String    @unique @db.VarChar(100)
+  usuarios       Usuario[]
+
+  @@map("departamento")
+}
+
+model Roles {
+  idRol       String        @id @default(uuid()) @map("id_rol") @db.Uuid
+  nombre      String        @unique @db.VarChar(50)
+  usuarios    Usuario[]
+  rolPermisos RolPermiso[]
+
+  @@map("roles")
+}
+
+model Permiso {
+  idPermiso   String        @id @default(uuid()) @map("id_permiso") @db.Uuid
+  nombre      String        @unique @db.VarChar(100)
+  rolPermisos RolPermiso[]
+
+  @@map("permiso")
+}
+
+model RolPermiso {
+  idRol     String  @map("id_rol") @db.Uuid
+  idPermiso String  @map("id_permiso") @db.Uuid
+  rol       Roles   @relation(fields: [idRol], references: [idRol], onDelete: Cascade)
+  permiso   Permiso @relation(fields: [idPermiso], references: [idPermiso], onDelete: Cascade)
+
+  @@id([idRol, idPermiso])
+  @@index([idPermiso])
+  @@map("rol_permiso")
+}
+
+model Usuario {
+  idUsuario      String       @id @default(uuid()) @map("id_usuario") @db.Uuid
+  nombre         String       @db.VarChar(150)
+  correo         String       @unique @db.VarChar(150)
+  password       String       @db.VarChar(255)
+  telefono       String?      @db.VarChar(25)
+  idRol          String       @map("id_rol") @db.Uuid
+  idDepartamento String       @map("id_departamento") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  rol            Roles        @relation(fields: [idRol], references: [idRol])
+  departamento   Departamento @relation(fields: [idDepartamento], references: [idDepartamento])
+  sesiones       Sesion[]
+
+  @@index([idRol])
+  @@index([idDepartamento])
+  @@map("usuario")
+}
+
+model Sesion {
+  idSesion         String   @id @default(uuid()) @map("id_sesion") @db.Uuid
+  idUsuario        String   @map("id_usuario") @db.Uuid
+  refreshTokenHash String   @unique @map("refresh_token_hash") @db.VarChar(255)
+  fechaInicio      DateTime @default(now()) @map("fecha_inicio")
+  fechaExpiracion  DateTime @map("fecha_expiracion")
+  isRevoked        Boolean  @default(false) @map("is_revoked")
+  userAgent        String?  @map("user_agent") @db.Text
+  ipAddress        String?  @map("ip_address") @db.VarChar(45)
+
+  usuario          Usuario  @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade)
+
+  @@index([idUsuario])
+  @@index([refreshTokenHash])
+  @@map("sesion")
+}
+
