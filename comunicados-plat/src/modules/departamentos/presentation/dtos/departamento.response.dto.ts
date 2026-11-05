@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class DepartamentoResponseDto {
   @ApiProperty({
@@ -13,8 +13,16 @@ export class DepartamentoResponseDto {
   })
   nombre: string;
 
-  constructor(idDepartamento: string, nombre: string) {
+  @ApiPropertyOptional({
+    description: 'Identificador UUID de la sucursal a la que pertenece',
+    example: 'b4a8e239-1662-43bb-a829-9e19ff562d98',
+    nullable: true,
+  })
+  idSucursal: string | null;
+
+  constructor(idDepartamento: string, nombre: string, idSucursal: string | null = null) {
     this.idDepartamento = idDepartamento;
     this.nombre = nombre;
+    this.idSucursal = idSucursal;
   }
 }

@@ -33,7 +33,10 @@ export class DepartamentoPrismaRepository implements DepartamentoRepositoryPort 
     const data = DepartamentoMapper.toPersistence(departamento);
     await this.prisma.departamento.upsert({
       where: { idDepartamento: data.idDepartamento },
-      update: { nombre: data.nombre },
+      update: {
+        nombre: data.nombre,
+        idSucursal: data.idSucursal,
+      },
       create: data,
     });
   }

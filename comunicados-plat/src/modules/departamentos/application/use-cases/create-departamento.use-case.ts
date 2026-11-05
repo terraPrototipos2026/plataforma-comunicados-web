@@ -11,11 +11,13 @@ import { Departamento } from '../../domain/entities/departamento.entity.js';
 
 export interface CreateDepartamentoInput {
   nombre: string;
+  idSucursal?: string | null;
 }
 
 export interface DepartamentoOutput {
   idDepartamento: string;
   nombre: string;
+  idSucursal: string | null;
 }
 
 @Injectable()
@@ -38,6 +40,7 @@ export class CreateDepartamentoUseCase {
       departamento = Departamento.create({
         idDepartamento: randomUUID(),
         nombre: normalized,
+        idSucursal: input.idSucursal ?? null,
       });
     } catch (error) {
       throw new BadRequestException(
@@ -50,6 +53,7 @@ export class CreateDepartamentoUseCase {
     return {
       idDepartamento: departamento.idDepartamento,
       nombre: departamento.nombre,
+      idSucursal: departamento.idSucursal,
     };
   }
 }

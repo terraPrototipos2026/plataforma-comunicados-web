@@ -15,6 +15,7 @@ export class GetDepartamentosUseCase {
     return list.map((item) => ({
       idDepartamento: item.idDepartamento,
       nombre: item.nombre,
+      idSucursal: item.idSucursal,
     }));
   }
 
@@ -27,6 +28,7 @@ export class GetDepartamentosUseCase {
     return {
       idDepartamento: item.idDepartamento,
       nombre: item.nombre,
+      idSucursal: item.idSucursal,
     };
   }
 }

@@ -11,7 +11,8 @@ import type { DepartamentoOutput } from './create-departamento.use-case.js';
 
 export interface UpdateDepartamentoInput {
   idDepartamento: string;
-  nombre: string;
+  nombre?: string;
+  idSucursal?: string | null;
 }
 
 @Injectable()
@@ -29,19 +30,25 @@ export class UpdateDepartamentoUseCase {
       );
     }
 
-    const normalized = input.nombre.trim().toLowerCase();
-    const collision = await this.departamentoRepository.findByNombre(normalized);
+    if (input.nombre !== undefined) {
+      const normalized = input.nombre.trim().toLowerCase();
+      const collision = await this.departamentoRepository.findByNombre(normalized);
 
-    if (collision && collision.idDepartamento !== current.idDepartamento) {
-      throw new ConflictException(`El nombre de departamento "${normalized}" ya está en uso.`);
+      if (collision && collision.idDepartamento !== current.idDepartamento) {
+        throw new ConflictException(`El nombre de departamento "${normalized}" ya está en uso.`);
+      }
+
+      try {
+        current.rename(normalized);
+      } catch (error) {
+        throw new BadRequestException(
+          error instanceof Error ? error.message : 'Nombre de departamento inválido.',
+        );
+      }
     }
 
-    try {
-      current.rename(normalized);
-    } catch (error) {
-      throw new BadRequestException(
-        error instanceof Error ? error.message : 'Nombre de departamento inválido.',
-      );
+    if (input.idSucursal !== undefined) {
+      current.assignSucursal(input.idSucursal);
     }
 
     await this.departamentoRepository.save(current);
@@ -49,6 +56,7 @@ export class UpdateDepartamentoUseCase {
     return {
       idDepartamento: current.idDepartamento,
       nombre: current.nombre,
+      idSucursal: current.idSucursal,
     };
   }
 }

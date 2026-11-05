@@ -6,11 +6,23 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Sucursal {
+  idSucursal    String         @id @default(uuid()) @map("id_sucursal") @db.Uuid
+  nombre        String         @unique @db.VarChar(100)
+  direccion     String         @db.VarChar(255)
+  departamentos Departamento[]
+
+  @@map("sucursal")
+}
+
 model Departamento {
   idDepartamento String    @id @default(uuid()) @map("id_departamento") @db.Uuid
   nombre         String    @unique @db.VarChar(100)
+  idSucursal     String?   @map("id_sucursal") @db.Uuid
   usuarios       Usuario[]
+  sucursal       Sucursal? @relation(fields: [idSucursal], references: [idSucursal], onDelete: Restrict)
 
+  @@index([idSucursal])
   @@map("departamento")
 }
 

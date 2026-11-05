@@ -2,12 +2,14 @@ import { Suspense, useEffect } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router';
 import { authContainer } from '../../features/auth/infrastructure/container';
 import { authRoutes } from '../../features/auth/presentation/routes/auth.routes';
+import { dashboardRoutes } from '../../features/dashboard/presentation/routes/dashboard.routes';
 import { landingRoutes } from '../../features/landing/presentation/routes/landing.routes';
 import { useAuthStore } from '../store/use-auth-store';
 
 const router = createBrowserRouter([
   ...landingRoutes,
   ...authRoutes,
+  ...dashboardRoutes,
   {
     path: '*',
     element: <Navigate to="/" replace />,

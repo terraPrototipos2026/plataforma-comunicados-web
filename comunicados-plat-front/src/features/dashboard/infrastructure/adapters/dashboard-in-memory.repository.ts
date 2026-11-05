@@ -1,0 +1,237 @@
+import type { DashboardOverviewData } from '../../domain/models/dashboard.model';
+import type { DashboardRepository } from '../../domain/ports/dashboard.repository';
+import type { DashboardOverviewApiResponseDto } from '../dtos/dashboard-api.dto';
+import { DashboardMapper } from '../mappers/dashboard.mapper';
+
+const MATERIAL_DASHBOARD_API_SNAPSHOT: DashboardOverviewApiResponseDto = {
+  kpis: [
+    {
+      id: 'todays-money',
+      label: "Today's Money",
+      value: '$53k',
+      delta: '+55%',
+      is_positive: true,
+      comparison_text: 'than last week',
+      variant: 'dark',
+      icon_key: 'wallet',
+    },
+    {
+      id: 'todays-users',
+      label: "Today's Users",
+      value: '2,300',
+      delta: '+3%',
+      is_positive: true,
+      comparison_text: 'than last month',
+      variant: 'magenta',
+      icon_key: 'users',
+    },
+    {
+      id: 'new-clients',
+      label: 'New Clients',
+      value: '+3,462',
+      delta: '-2%',
+      is_positive: false,
+      comparison_text: 'than yesterday',
+      variant: 'green',
+      icon_key: 'user-plus',
+    },
+    {
+      id: 'sales',
+      label: 'Sales',
+      value: '$103,430',
+      delta: '+5%',
+      is_positive: true,
+      comparison_text: 'than yesterday',
+      variant: 'cyan',
+      icon_key: 'chart',
+    },
+  ],
+  charts: [
+    {
+      id: 'website-views',
+      title: 'Website Views',
+      description: 'Last Campaign Performance',
+      timestamp: 'campaign sent 2 days ago',
+      chart_type: 'bar',
+      variant: 'dark',
+      points: [
+        { label: 'M', value: 50 },
+        { label: 'T', value: 20 },
+        { label: 'W', value: 10 },
+        { label: 'T', value: 22 },
+        { label: 'F', value: 50 },
+        { label: 'S', value: 10 },
+        { label: 'S', value: 40 },
+      ],
+    },
+    {
+      id: 'daily-sales',
+      title: 'Daily Sales',
+      description: 'increase in today sales.',
+      highlight_badge: '(+15%)',
+      timestamp: 'updated 4 min ago',
+      chart_type: 'line',
+      variant: 'magenta',
+      points: [
+        { label: 'Apr', value: 50 },
+        { label: 'May', value: 40 },
+        { label: 'Jun', value: 300 },
+        { label: 'Jul', value: 320 },
+        { label: 'Aug', value: 500 },
+        { label: 'Sep', value: 350 },
+        { label: 'Oct', value: 200 },
+        { label: 'Nov', value: 230 },
+        { label: 'Dec', value: 500 },
+      ],
+    },
+    {
+      id: 'completed-tasks',
+      title: 'Completed Tasks',
+      description: 'Last Campaign Performance',
+      timestamp: 'just updated',
+      chart_type: 'line',
+      variant: 'green',
+      points: [
+        { label: 'Apr', value: 50 },
+        { label: 'May', value: 40 },
+        { label: 'Jun', value: 300 },
+        { label: 'Jul', value: 220 },
+        { label: 'Aug', value: 500 },
+        { label: 'Sep', value: 250 },
+        { label: 'Oct', value: 400 },
+        { label: 'Nov', value: 230 },
+        { label: 'Dec', value: 500 },
+      ],
+    },
+  ],
+  projects_done_this_month: 30,
+  projects: [
+    {
+      id: 'proj-material-xd',
+      company_name: 'Material XD Version',
+      company_short_code: 'XD',
+      logo_tone: 'magenta',
+      budget: '$14,000',
+      completion: 60,
+      members: [
+        { id: 'm1', name: 'Ryan Tompson', initials: 'RT', role: 'UI Architect', tone: 'primario' },
+        { id: 'm2', name: 'Romina Hadid', initials: 'RH', role: 'Product Designer', tone: 'emerald' },
+        { id: 'm3', name: 'Alexander Smith', initials: 'AS', role: 'Frontend Lead', tone: 'cyan' },
+        { id: 'm4', name: 'Jessica Doe', initials: 'JD', role: 'QA Specialist', tone: 'amber' },
+      ],
+    },
+    {
+      id: 'proj-progress-track',
+      company_name: 'Add Progress Track',
+      company_short_code: 'AT',
+      logo_tone: 'cyan',
+      budget: '$3,000',
+      completion: 10,
+      members: [
+        { id: 'm5', name: 'Romina Hadid', initials: 'RH', role: 'Product Designer', tone: 'emerald' },
+        { id: 'm6', name: 'Jessica Doe', initials: 'JD', role: 'QA Specialist', tone: 'amber' },
+      ],
+    },
+    {
+      id: 'proj-platform-errors',
+      company_name: 'Fix Platform Errors',
+      company_short_code: 'SL',
+      logo_tone: 'emerald',
+      budget: 'Not set',
+      completion: 100,
+      members: [
+        { id: 'm7', name: 'Alexander Smith', initials: 'AS', role: 'Frontend Lead', tone: 'cyan' },
+        { id: 'm8', name: 'Ryan Tompson', initials: 'RT', role: 'UI Architect', tone: 'primario' },
+      ],
+    },
+    {
+      id: 'proj-mobile-app',
+      company_name: 'Launch our Mobile App',
+      company_short_code: 'SP',
+      logo_tone: 'primario',
+      budget: '$20,500',
+      completion: 100,
+      members: [
+        { id: 'm9', name: 'Jessica Doe', initials: 'JD', role: 'QA Specialist', tone: 'amber' },
+        { id: 'm10', name: 'Romina Hadid', initials: 'RH', role: 'Product Designer', tone: 'emerald' },
+        { id: 'm11', name: 'Alexander Smith', initials: 'AS', role: 'Frontend Lead', tone: 'cyan' },
+        { id: 'm12', name: 'Ryan Tompson', initials: 'RT', role: 'UI Architect', tone: 'primario' },
+      ],
+    },
+    {
+      id: 'proj-pricing-page',
+      company_name: 'Add the New Pricing Page',
+      company_short_code: 'JR',
+      logo_tone: 'amber',
+      budget: '$500',
+      completion: 25,
+      members: [
+        { id: 'm13', name: 'Ryan Tompson', initials: 'RT', role: 'UI Architect', tone: 'primario' },
+      ],
+    },
+    {
+      id: 'proj-redesign-shop',
+      company_name: 'Redesign New Online Shop',
+      company_short_code: 'IN',
+      logo_tone: 'dark',
+      budget: '$2,000',
+      completion: 40,
+      members: [
+        { id: 'm14', name: 'Romina Hadid', initials: 'RH', role: 'Product Designer', tone: 'emerald' },
+        { id: 'm15', name: 'Alexander Smith', initials: 'AS', role: 'Frontend Lead', tone: 'cyan' },
+      ],
+    },
+  ],
+  orders_growth_percent: '24%',
+  orders_overview: [
+    {
+      id: 'ord-1',
+      title: '$2400, Design changes',
+      timestamp: '22 DEC 7:20 PM',
+      icon_key: 'bell',
+      tone: 'green',
+    },
+    {
+      id: 'ord-2',
+      title: 'New order #1832412',
+      timestamp: '21 DEC 11 PM',
+      icon_key: 'code',
+      tone: 'primario',
+    },
+    {
+      id: 'ord-3',
+      title: 'Server payments for April',
+      timestamp: '21 DEC 9:34 PM',
+      icon_key: 'cart',
+      tone: 'cyan',
+    },
+    {
+      id: 'ord-4',
+      title: 'New card added for order #4395133',
+      timestamp: '20 DEC 2:20 AM',
+      icon_key: 'card',
+      tone: 'amber',
+    },
+    {
+      id: 'ord-5',
+      title: 'Unlock packages for development',
+      timestamp: '18 DEC 4:54 AM',
+      icon_key: 'key',
+      tone: 'magenta',
+    },
+    {
+      id: 'ord-6',
+      title: 'New order #9583120',
+      timestamp: '17 DEC',
+      icon_key: 'coins',
+      tone: 'dark',
+    },
+  ],
+};
+
+export class DashboardInMemoryRepository implements DashboardRepository {
+  async getOverview(): Promise<DashboardOverviewData> {
+    return DashboardMapper.toDomain(MATERIAL_DASHBOARD_API_SNAPSHOT);
+  }
+}
+

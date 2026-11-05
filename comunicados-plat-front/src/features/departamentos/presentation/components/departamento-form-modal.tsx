@@ -1,0 +1,230 @@
+import { useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { Building2, X, AlertCircle, Loader2, Check, Store } from 'lucide-react';
+import { SlideFadeTransition } from '../../../../shared/components/slide-fade-transition';
+import { useSucursalesQuery } from '../../../sucursales/presentation/hooks/use-sucursales-query';
+import type { Departamento } from '../../domain/models/departamento.model';
+import {
+  useCreateDepartamentoMutation,
+  useUpdateDepartamentoMutation,
+} from '../hooks/use-departamento-mutations';
+import { useDepartamentosUiStore } from '../store/use-departamentos-ui-store';
+
+function DepartamentoFormDialogContent({
+  editingDepartamento,
+  onClose,
+}: {
+  editingDepartamento: Departamento | null;
+  onClose: () => void;
+}) {
+  const [nombre, setNombre] = useState(
+    editingDepartamento ? editingDepartamento.nombre : '',
+  );
+  const [idSucursal, setIdSucursal] = useState<string>(
+    editingDepartamento?.idSucursal ?? '',
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const { data: sucursales = [], isLoading: isLoadingSucursales } = useSucursalesQuery();
+  const createMutation = useCreateDepartamentoMutation();
+  const updateMutation = useUpdateDepartamentoMutation();
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMessage(null);
+
+    try {
+      if (editingDepartamento) {
+        await updateMutation.mutateAsync({
+          idDepartamento: editingDepartamento.idDepartamento,
+          nombre,
+          idSucursal: idSucursal ? idSucursal : null,
+        });
+      } else {
+        await createMutation.mutateAsync({
+          nombre,
+          idSucursal: idSucursal ? idSucursal : null,
+        });
+      }
+      onClose();
+    } catch (err) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage('Ocurrió un error al guardar el departamento.');
+      }
+    }
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dept-modal-title"
+      className="rounded-terra-modal bg-superficie-1 border-[1.5px] border-borde p-6 shadow-terra text-left flex flex-col gap-5"
+    >
+      {/* Cabecera del Modal */}
+      <div className="flex items-start justify-between gap-3 border-b border-borde-suave pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-terra-boton bg-gradient-to-br from-oferta to-primario text-sobre-primario shadow-terra-flotante flex items-center justify-center shrink-0">
+            <Building2 className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[0.65rem] font-extrabold uppercase tracking-[0.18em] text-primario block">
+              Estructura Organizacional
+            </span>
+            <h2
+              id="dept-modal-title"
+              className="text-base sm:text-lg font-extrabold text-texto-principal"
+            >
+              {editingDepartamento ? 'Editar Departamento' : 'Nuevo Departamento'}
+            </h2>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={onClose}
+          aria-label="Cerrar modal"
+          className="min-w-[2.75rem] min-h-[2.75rem] w-11 h-11 rounded-full hover:bg-superficie-2 text-texto-suave hover:text-texto-principal flex items-center justify-center transition-colors cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        {errorMessage && (
+          <div
+            role="alert"
+            className="rounded-terra-campo border-[1.5px] border-alerta bg-primario-claro p-3 flex items-start gap-2.5 text-alerta"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span className="text-xs font-bold text-texto-principal">
+              {errorMessage}
+            </span>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="dept-nombre-input"
+            className="text-xs font-extrabold uppercase tracking-wider text-texto-principal"
+          >
+            Nombre del Departamento *
+          </label>
+          <input
+            id="dept-nombre-input"
+            type="text"
+            required
+            maxLength={100}
+            disabled={isPending}
+            value={nombre}
+            onChange={(e) => {
+              setNombre(e.target.value);
+              if (errorMessage) setErrorMessage(null);
+            }}
+            placeholder="Ej. ventas, marketing, logística..."
+            className="w-full min-h-[3rem] px-4 py-2.5 rounded-terra-campo bg-superficie-2 border-[1.5px] border-borde hover:border-borde-hover focus:border-primario focus:bg-superficie-1 focus:shadow-terra-anillo focus:outline-none text-sm font-medium text-texto-principal placeholder:text-texto-placeholder transition-all"
+          />
+          <span className="text-[0.68rem] text-texto-suave">
+            Se normalizará automáticamente en minúsculas (máx. 100 caracteres).
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="dept-sucursal-select"
+            className="text-xs font-extrabold uppercase tracking-wider text-texto-principal flex items-center gap-1.5"
+          >
+            <Store className="w-3.5 h-3.5 text-primario" />
+            <span>Sucursal a la que Pertenece</span>
+          </label>
+          <select
+            id="dept-sucursal-select"
+            disabled={isPending || isLoadingSucursales}
+            value={idSucursal}
+            onChange={(e) => setIdSucursal(e.target.value)}
+            className="w-full min-h-[3rem] px-4 py-2.5 rounded-terra-campo bg-superficie-2 border-[1.5px] border-borde hover:border-borde-hover focus:border-primario focus:bg-superficie-1 focus:shadow-terra-anillo focus:outline-none text-sm font-medium text-texto-principal transition-all cursor-pointer disabled:opacity-50"
+          >
+            <option value="">-- Sin sucursal asignada (Opcional) --</option>
+            {sucursales.map((s) => (
+              <option key={s.idSucursal} value={s.idSucursal}>
+                {s.nombre} ({s.direccion})
+              </option>
+            ))}
+          </select>
+          <span className="text-[0.68rem] text-texto-suave">
+            Vincula este departamento a una sucursal corporativa específica.
+          </span>
+        </div>
+
+        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-borde-suave">
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={onClose}
+            className="min-h-[2.75rem] px-4 py-2 rounded-full bg-superficie-2 hover:bg-superficie-crema border border-borde text-xs font-bold text-texto-principal transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            disabled={isPending}
+            className="min-h-[2.75rem] px-5 py-2 rounded-full bg-primario hover:bg-primario-hover text-sobre-primario shadow-terra-flotante text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+          >
+            {isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Check className="w-4 h-4" />
+            )}
+            <span>
+              {editingDepartamento ? 'Guardar Cambios' : 'Crear Departamento'}
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export function DepartamentoFormModal() {
+  const isFormModalOpen = useDepartamentosUiStore((state) => state.isFormModalOpen);
+  const editingDepartamento = useDepartamentosUiStore(
+    (state) => state.editingDepartamento,
+  );
+  const closeFormModal = useDepartamentosUiStore((state) => state.closeFormModal);
+
+  if (!isFormModalOpen || typeof document === 'undefined') return null;
+
+  const modalKey = editingDepartamento?.idDepartamento ?? 'create-dept';
+
+  return createPortal(
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      <div
+        aria-hidden="true"
+        onClick={closeFormModal}
+        className="fixed inset-0 bg-black/55 backdrop-blur-xs transition-opacity"
+      />
+
+      <SlideFadeTransition
+        isVisible={isFormModalOpen}
+        direction="vertical"
+        offset={24}
+        preset="spring"
+        transitionKey={modalKey}
+        className="relative z-10 w-full max-w-[26rem]"
+      >
+        <DepartamentoFormDialogContent
+          key={modalKey}
+          editingDepartamento={editingDepartamento}
+          onClose={closeFormModal}
+        />
+      </SlideFadeTransition>
+    </div>,
+    document.body,
+  );
+}

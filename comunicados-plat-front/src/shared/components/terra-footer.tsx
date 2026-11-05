@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import logoOscuroImg from '../../assets/logooscuro.png';
 
 export function TerraFooter() {
   const currentYear = new Date().getFullYear();
@@ -6,14 +7,13 @@ export function TerraFooter() {
   return (
     <footer className="bg-footer-fondo text-footer-texto border-t border-footer-borde pb-[env(safe-area-inset-bottom)] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex flex-col gap-1.5 text-left">
-          <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-terra-chico bg-primario text-sobre-primario font-extrabold text-sm flex items-center justify-center shadow-terra-sm">
-              T
-            </span>
-            <span className="text-base font-extrabold text-footer-texto tracking-tight">
-              TERRA Colchones &amp; Muebles
-            </span>
+        <div className="flex flex-col gap-2 text-left">
+          <div className="flex items-center">
+            <img
+              src={logoOscuroImg}
+              alt="TERRA Colchones & Muebles"
+              className="h-20 sm:h-24 w-auto object-contain select-none -my-3"
+            />
           </div>
           <p className="text-xs text-footer-texto-suave max-w-md leading-relaxed">
             Plataforma centralizada de comunicación interna, circulares corporativas y avisos

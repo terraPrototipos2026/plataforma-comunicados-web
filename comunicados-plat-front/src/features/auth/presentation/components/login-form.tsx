@@ -29,7 +29,7 @@ export function LoginForm() {
   const loginMutation = useLoginMutation();
 
   const state = location.state as LocationState | null;
-  const redirectPath = state?.from?.pathname ?? '/';
+  const redirectPath = state?.from?.pathname ?? '/dashboard';
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

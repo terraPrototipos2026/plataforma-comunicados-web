@@ -48,7 +48,7 @@ export class DepartamentosController {
   @ApiResponse({ status: 200, description: 'Lista de departamentos.', type: [DepartamentoResponseDto] })
   async findAll(): Promise<DepartamentoResponseDto[]> {
     const items = await this.getDepartamentosUseCase.findAll();
-    return items.map((d) => new DepartamentoResponseDto(d.idDepartamento, d.nombre));
+    return items.map((d) => new DepartamentoResponseDto(d.idDepartamento, d.nombre, d.idSucursal));
   }
 
   @Get(':id')
@@ -63,7 +63,7 @@ export class DepartamentosController {
   @ApiResponse({ status: 404, description: 'Departamento no encontrado.' })
   async findById(@Param('id', ParseUUIDPipe) id: string): Promise<DepartamentoResponseDto> {
     const item = await this.getDepartamentosUseCase.findById(id);
-    return new DepartamentoResponseDto(item.idDepartamento, item.nombre);
+    return new DepartamentoResponseDto(item.idDepartamento, item.nombre, item.idSucursal);
   }
 
   @Post()
@@ -80,8 +80,11 @@ export class DepartamentosController {
   @ApiResponse({ status: 401, description: 'No autenticado.' })
   @ApiResponse({ status: 409, description: 'El departamento ya existe.' })
   async create(@Body() dto: CreateDepartamentoRequestDto): Promise<DepartamentoResponseDto> {
-    const created = await this.createDepartamentoUseCase.execute({ nombre: dto.nombre });
-    return new DepartamentoResponseDto(created.idDepartamento, created.nombre);
+    const created = await this.createDepartamentoUseCase.execute({
+      nombre: dto.nombre,
+      idSucursal: dto.idSucursal,
+    });
+    return new DepartamentoResponseDto(created.idDepartamento, created.nombre, created.idSucursal);
   }
 
   @Patch(':id')
@@ -106,8 +109,9 @@ export class DepartamentosController {
     const updated = await this.updateDepartamentoUseCase.execute({
       idDepartamento: id,
       nombre: dto.nombre,
+      idSucursal: dto.idSucursal,
     });
-    return new DepartamentoResponseDto(updated.idDepartamento, updated.nombre);
+    return new DepartamentoResponseDto(updated.idDepartamento, updated.nombre, updated.idSucursal);
   }
 
   @Delete(':id')

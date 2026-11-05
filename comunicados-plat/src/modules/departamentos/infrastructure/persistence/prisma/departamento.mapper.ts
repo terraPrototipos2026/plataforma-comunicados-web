@@ -6,6 +6,7 @@ export class DepartamentoMapper {
     return Departamento.reconstitute({
       idDepartamento: raw.idDepartamento,
       nombre: raw.nombre,
+      idSucursal: raw.idSucursal,
     });
   }
 
@@ -13,6 +14,7 @@ export class DepartamentoMapper {
     return {
       idDepartamento: entity.idDepartamento,
       nombre: entity.nombre,
+      idSucursal: entity.idSucursal,
     };
   }
 }

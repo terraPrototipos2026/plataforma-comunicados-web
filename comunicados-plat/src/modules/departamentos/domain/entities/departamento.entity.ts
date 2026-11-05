@@ -1,10 +1,19 @@
 export interface DepartamentoProps {
   idDepartamento: string;
   nombre: string;
+  idSucursal?: string | null;
 }
 
 export class Departamento {
-  private constructor(private readonly props: DepartamentoProps) {}
+  private readonly _idDepartamento: string;
+  private _nombre: string;
+  private _idSucursal: string | null;
+
+  private constructor(props: DepartamentoProps) {
+    this._idDepartamento = props.idDepartamento;
+    this._nombre = props.nombre;
+    this._idSucursal = props.idSucursal ?? null;
+  }
 
   public static create(props: DepartamentoProps): Departamento {
     const normalized = Departamento.normalizeNombre(props.nombre);
@@ -13,6 +22,7 @@ export class Departamento {
     return new Departamento({
       idDepartamento: props.idDepartamento,
       nombre: normalized,
+      idSucursal: props.idSucursal ?? null,
     });
   }
 
@@ -20,13 +30,18 @@ export class Departamento {
     return new Departamento({
       idDepartamento: props.idDepartamento,
       nombre: props.nombre,
+      idSucursal: props.idSucursal ?? null,
     });
   }
 
   public rename(nuevoNombre: string): void {
     const normalized = Departamento.normalizeNombre(nuevoNombre);
     Departamento.validateNombre(normalized);
-    this.props.nombre = normalized;
+    this._nombre = normalized;
+  }
+
+  public assignSucursal(idSucursal: string | null): void {
+    this._idSucursal = idSucursal;
   }
 
   private static normalizeNombre(nombre: string): string {
@@ -43,10 +58,14 @@ export class Departamento {
   }
 
   public get idDepartamento(): string {
-    return this.props.idDepartamento;
+    return this._idDepartamento;
   }
 
   public get nombre(): string {
-    return this.props.nombre;
+    return this._nombre;
+  }
+
+  public get idSucursal(): string | null {
+    return this._idSucursal;
   }
 }

@@ -110,3 +110,21 @@
   --shadow-terra-sm: 0 8px 24px rgba(166, 25, 46, 0.12);
   --shadow-terra-anillo: 0 0 0 4px rgba(166, 25, 46, 0.12);
 }
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
