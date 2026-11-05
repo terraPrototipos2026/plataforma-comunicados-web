@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { seedRoles } from './seeds/roles.seed.ts';
 import { seedDepartamentos } from './seeds/departamentos.seed.ts';
+import { seedAdminUser } from './seeds/admin-user.seed.ts';
 
 const connectionString = process.env.DATABASE_URL;
 const adapter = new PrismaPg({ connectionString });
@@ -13,6 +14,7 @@ async function main() {
   
   await seedRoles(prisma);
   await seedDepartamentos(prisma);
+  await seedAdminUser(prisma);
 
   console.log('✨ [SEED] Carga de datos completada con éxito.');
 }
