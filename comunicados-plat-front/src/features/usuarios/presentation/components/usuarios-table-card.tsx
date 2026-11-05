@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Users,
   UserPlus,
@@ -11,11 +11,13 @@ import {
   Phone,
   Shield,
   Building2,
+  Store,
 } from 'lucide-react';
 import { useThemeStore } from '../../../../core/store/use-theme-store';
 import { UsuarioRules } from '../../domain/models/usuario.model';
 import { useRolesQuery } from '../../../roles/presentation/hooks/use-roles-query';
 import { useDepartamentosQuery } from '../../../departamentos/presentation/hooks/use-departamentos-query';
+import { useSucursalesQuery } from '../../../sucursales/presentation/hooks/use-sucursales-query';
 import { useUsuariosQuery } from '../hooks/use-usuarios-query';
 import { useDeleteUsuarioMutation } from '../hooks/use-usuario-mutations';
 import { useUsuariosUiStore } from '../store/use-usuarios-ui-store';
@@ -29,6 +31,7 @@ export function UsuariosTableCard({ onGoToRegister }: UsuariosTableCardProps) {
   const { data: usuarios = [], isLoading, error } = useUsuariosQuery();
   const { data: roles = [] } = useRolesQuery();
   const { data: departamentos = [] } = useDepartamentosQuery();
+  const { data: sucursales = [] } = useSucursalesQuery();
   const deleteMutation = useDeleteUsuarioMutation();
 
   const searchTerm = useUsuariosUiStore((state) => state.searchTerm);
@@ -37,6 +40,8 @@ export function UsuariosTableCard({ onGoToRegister }: UsuariosTableCardProps) {
   const setSelectedRolFilter = useUsuariosUiStore((state) => state.setSelectedRolFilter);
   const selectedDeptFilter = useUsuariosUiStore((state) => state.selectedDeptFilter);
   const setSelectedDeptFilter = useUsuariosUiStore((state) => state.setSelectedDeptFilter);
+  const selectedSucursalFilter = useUsuariosUiStore((state) => state.selectedSucursalFilter);
+  const setSelectedSucursalFilter = useUsuariosUiStore((state) => state.setSelectedSucursalFilter);
   const openEditModal = useUsuariosUiStore((state) => state.openEditModal);
   const deletingUsuario = useUsuariosUiStore((state) => state.deletingUsuario);
   const openDeleteConfirm = useUsuariosUiStore((state) => state.openDeleteConfirm);
@@ -44,6 +49,31 @@ export function UsuariosTableCard({ onGoToRegister }: UsuariosTableCardProps) {
 
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const highContrast = useThemeStore((state) => state.highContrast);
+
+  // Mapa de Departamento -> Sucursal (por idDepartamento y por nombre normalizado)
+  const deptToSucursalMap = useMemo(() => {
+    const sucursalById = new Map<string, string>();
+    sucursales.forEach((s) => sucursalById.set(s.idSucursal, s.nombre));
+
+    const deptMap = new Map<string, { idSucursal?: string | null; nombreSucursal?: string }>();
+    departamentos.forEach((d) => {
+      const nombreSucursal = d.idSucursal ? sucursalById.get(d.idSucursal) : undefined;
+      const data = { idSucursal: d.idSucursal, nombreSucursal };
+      deptMap.set(d.idDepartamento, data);
+      deptMap.set(d.nombre.toLowerCase().trim(), data);
+    });
+
+    return deptMap;
+  }, [departamentos, sucursales]);
+
+  // Departamentos visibles condicionados por la sucursal seleccionada
+  const filteredDepartamentosOptions = useMemo(() => {
+    if (selectedSucursalFilter === 'all') return departamentos;
+    if (selectedSucursalFilter === 'unassigned') {
+      return departamentos.filter((d) => !d.idSucursal);
+    }
+    return departamentos.filter((d) => d.idSucursal === selectedSucursalFilter);
+  }, [departamentos, selectedSucursalFilter]);
 
   const filteredUsuarios = usuarios.filter((user) => {
     const matchesSearch =
@@ -59,7 +89,19 @@ export function UsuariosTableCard({ onGoToRegister }: UsuariosTableCardProps) {
       selectedDeptFilter === 'all' ||
       user.departamento.toLowerCase() === selectedDeptFilter.toLowerCase();
 
-    return matchesSearch && matchesRol && matchesDept;
+    // Filtro por Sucursal a través del departamento del usuario
+    const sucursalInfo =
+      deptToSucursalMap.get(user.idDepartamento) ||
+      deptToSucursalMap.get(user.departamento.toLowerCase().trim());
+
+    let matchesSucursal = true;
+    if (selectedSucursalFilter === 'unassigned') {
+      matchesSucursal = !sucursalInfo?.idSucursal;
+    } else if (selectedSucursalFilter !== 'all') {
+      matchesSucursal = sucursalInfo?.idSucursal === selectedSucursalFilter;
+    }
+
+    return matchesSearch && matchesRol && matchesDept && matchesSucursal;
   });
 
   const handleConfirmDelete = async () => {
@@ -117,9 +159,9 @@ export function UsuariosTableCard({ onGoToRegister }: UsuariosTableCardProps) {
           )}
         </div>
 
-        {/* Barra de Filtros y Búsqueda */}
+        {/* Barra de Filtros y Búsqueda (Buscador + Sucursales + Roles + Departamentos) */}
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-          <div className="sm:col-span-5 relative flex items-center">
+          <div className="sm:col-span-4 relative flex items-center">
             <Search
               aria-hidden="true"
               className="w-4 h-4 text-texto-suave absolute left-3.5 pointer-events-none"
@@ -136,10 +178,45 @@ export function UsuariosTableCard({ onGoToRegister }: UsuariosTableCardProps) {
 
           <div className="sm:col-span-3">
             <select
+              value={selectedSucursalFilter}
+              onChange={(e) => {
+                const nextSucursal = e.target.value;
+                setSelectedSucursalFilter(nextSucursal);
+                // Si el departamento seleccionado no pertenece a la nueva sucursal, restablecer a 'all'
+                if (selectedDeptFilter !== 'all') {
+                  const targetDept = departamentos.find(
+                    (d) => d.nombre.toLowerCase() === selectedDeptFilter.toLowerCase(),
+                  );
+                  if (
+                    targetDept &&
+                    nextSucursal !== 'all' &&
+                    (nextSucursal === 'unassigned'
+                      ? !!targetDept.idSucursal
+                      : targetDept.idSucursal !== nextSucursal)
+                  ) {
+                    setSelectedDeptFilter('all');
+                  }
+                }
+              }}
+              aria-label="Filtrar por sucursal"
+              className="w-full min-h-[2.75rem] px-3.5 py-2 rounded-terra-campo bg-superficie-2 border border-borde focus:border-primario focus:bg-superficie-1 focus:outline-none text-xs font-medium text-texto-principal capitalize cursor-pointer"
+            >
+              <option value="all">Todas las Sucursales</option>
+              {sucursales.map((s) => (
+                <option key={s.idSucursal} value={s.idSucursal}>
+                  {s.nombre}
+                </option>
+              ))}
+              <option value="unassigned">Sin Sucursal Asignada</option>
+            </select>
+          </div>
+
+          <div className="sm:col-span-2">
+            <select
               value={selectedRolFilter}
               onChange={(e) => setSelectedRolFilter(e.target.value)}
               aria-label="Filtrar por rol"
-              className="w-full min-h-[2.75rem] px-3.5 py-2 rounded-terra-campo bg-superficie-2 border border-borde focus:border-primario focus:bg-superficie-1 focus:outline-none text-xs font-medium text-texto-principal capitalize"
+              className="w-full min-h-[2.75rem] px-3.5 py-2 rounded-terra-campo bg-superficie-2 border border-borde focus:border-primario focus:bg-superficie-1 focus:outline-none text-xs font-medium text-texto-principal capitalize cursor-pointer"
             >
               <option value="all">Todos los Roles</option>
               {roles.map((r) => (
@@ -150,15 +227,15 @@ export function UsuariosTableCard({ onGoToRegister }: UsuariosTableCardProps) {
             </select>
           </div>
 
-          <div className="sm:col-span-4">
+          <div className="sm:col-span-3">
             <select
               value={selectedDeptFilter}
               onChange={(e) => setSelectedDeptFilter(e.target.value)}
               aria-label="Filtrar por departamento"
-              className="w-full min-h-[2.75rem] px-3.5 py-2 rounded-terra-campo bg-superficie-2 border border-borde focus:border-primario focus:bg-superficie-1 focus:outline-none text-xs font-medium text-texto-principal capitalize"
+              className="w-full min-h-[2.75rem] px-3.5 py-2 rounded-terra-campo bg-superficie-2 border border-borde focus:border-primario focus:bg-superficie-1 focus:outline-none text-xs font-medium text-texto-principal capitalize cursor-pointer"
             >
               <option value="all">Todos los Departamentos</option>
-              {departamentos.map((d) => (
+              {filteredDepartamentosOptions.map((d) => (
                 <option key={d.idDepartamento} value={d.nombre}>
                   {d.nombre}
                 </option>
@@ -257,7 +334,7 @@ export function UsuariosTableCard({ onGoToRegister }: UsuariosTableCardProps) {
                     scope="col"
                     className="py-3 px-4 text-[0.65rem] font-extrabold uppercase tracking-[0.16em] text-texto-suave"
                   >
-                    Departamento
+                    Departamento &amp; Sucursal
                   </th>
                   <th
                     scope="col"
@@ -299,10 +376,26 @@ export function UsuariosTableCard({ onGoToRegister }: UsuariosTableCardProps) {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-superficie-2 border border-borde text-xs font-semibold text-texto-principal capitalize">
-                        <Building2 className="w-3 h-3 text-texto-suave" />
-                        {u.departamento}
-                      </span>
+                      {(() => {
+                        const sInfo =
+                          deptToSucursalMap.get(u.idDepartamento) ||
+                          deptToSucursalMap.get(u.departamento.toLowerCase().trim());
+
+                        return (
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-superficie-2 border border-borde text-xs font-semibold text-texto-principal capitalize">
+                              <Building2 className="w-3 h-3 text-texto-suave" />
+                              {u.departamento}
+                            </span>
+                            {sInfo?.nombreSucursal && (
+                              <span className="inline-flex items-center gap-1 text-[0.68rem] font-bold text-primario px-1.5 py-0.5 rounded bg-superficie-crema">
+                                <Store className="w-3 h-3 text-primario" />
+                                <span>{sInfo.nombreSucursal}</span>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="py-3 px-4">
                       {u.telefono ? (

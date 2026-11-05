@@ -1,5 +1,6 @@
 export type DashboardNavKey =
   | 'dashboard'
+  | 'comunicados'
   | 'usuarios'
   | 'roles-permisos'
   | 'departamentos'

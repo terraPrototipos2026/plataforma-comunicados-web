@@ -1,36 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Loader2, AlertCircle, UserCheck } from 'lucide-react';
 import { useDepartamentosQuery } from '../../../departamentos/presentation/hooks/use-departamentos-query';
 import { useUpdateUsuarioMutation } from '../hooks/use-usuario-mutations';
 import { useUsuariosUiStore } from '../store/use-usuarios-ui-store';
+import type { Usuario } from '../../domain/models/usuario.model';
 
-export function UsuarioEditModal() {
-  const isEditModalOpen = useUsuariosUiStore((state) => state.isEditModalOpen);
-  const editingUsuario = useUsuariosUiStore((state) => state.editingUsuario);
-  const closeEditModal = useUsuariosUiStore((state) => state.closeEditModal);
+interface UsuarioEditFormContentProps {
+  usuario: Usuario;
+  onClose: () => void;
+}
 
+function UsuarioEditFormContent({ usuario, onClose }: UsuarioEditFormContentProps) {
   const { data: departamentos = [] } = useDepartamentosQuery();
   const updateMutation = useUpdateUsuarioMutation();
 
-  const [nombre, setNombre] = useState('');
-  const [correo, setCorreo] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [rol, setRol] = useState('');
-  const [departamento, setDepartamento] = useState('');
+  const [nombre, setNombre] = useState(usuario.nombre);
+  const [correo, setCorreo] = useState(usuario.correo);
+  const [telefono, setTelefono] = useState(usuario.telefono || '');
+  const [rol] = useState(usuario.rol);
+  const [departamento, setDepartamento] = useState(usuario.departamento);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (editingUsuario) {
-      setNombre(editingUsuario.nombre);
-      setCorreo(editingUsuario.correo);
-      setTelefono(editingUsuario.telefono || '');
-      setRol(editingUsuario.rol);
-      setDepartamento(editingUsuario.departamento);
-      setErrorMessage(null);
-    }
-  }, [editingUsuario]);
-
-  if (!isEditModalOpen || !editingUsuario) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,14 +27,14 @@ export function UsuarioEditModal() {
 
     try {
       await updateMutation.mutateAsync({
-        idUsuario: editingUsuario.idUsuario,
+        idUsuario: usuario.idUsuario,
         nombre,
         correo,
         telefono: telefono.trim() ? telefono : undefined,
         rol,
         departamento,
       });
-      closeEditModal();
+      onClose();
     } catch (err) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -80,7 +69,7 @@ export function UsuarioEditModal() {
           </div>
           <button
             type="button"
-            onClick={closeEditModal}
+            onClick={onClose}
             aria-label="Cerrar modal"
             className="w-9 h-9 rounded-full hover:bg-superficie-2 text-texto-suave hover:text-texto-principal flex items-center justify-center transition-colors cursor-pointer"
           >
@@ -177,7 +166,7 @@ export function UsuarioEditModal() {
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-borde-suave mt-2">
             <button
               type="button"
-              onClick={closeEditModal}
+              onClick={onClose}
               className="min-h-[2.75rem] px-4 py-2 rounded-full bg-superficie-2 hover:bg-superficie-crema border border-borde text-xs font-bold text-texto-principal transition-colors cursor-pointer"
             >
               Cancelar
@@ -194,6 +183,22 @@ export function UsuarioEditModal() {
         </form>
       </div>
     </div>
+  );
+}
+
+export function UsuarioEditModal() {
+  const isEditModalOpen = useUsuariosUiStore((state) => state.isEditModalOpen);
+  const editingUsuario = useUsuariosUiStore((state) => state.editingUsuario);
+  const closeEditModal = useUsuariosUiStore((state) => state.closeEditModal);
+
+  if (!isEditModalOpen || !editingUsuario) return null;
+
+  return (
+    <UsuarioEditFormContent
+      key={editingUsuario.idUsuario}
+      usuario={editingUsuario}
+      onClose={closeEditModal}
+    />
   );
 }
 

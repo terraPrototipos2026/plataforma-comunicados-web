@@ -7,6 +7,7 @@ import { RolesGridCard } from '../../../roles/presentation/components/roles-grid
 import { UsuariosTableCard } from '../../../usuarios/presentation/components/usuarios-table-card';
 import { UsuarioRegisterCard } from '../../../usuarios/presentation/components/usuario-register-card';
 import { UsuarioProfileCard } from '../../../usuarios/presentation/components/usuario-profile-card';
+import { ComunicadosManagementSection } from '../../../comunicados/presentation/components/comunicados-management-section';
 import { DashboardHeader } from '../components/dashboard-header';
 import { DashboardSidebar } from '../components/dashboard-sidebar';
 import { KpiCardsRow } from '../components/kpi-cards-row';
@@ -25,22 +26,21 @@ export default function DashboardPage() {
   const setUsuariosTab = useDashboardUiStore((state) => state.setUsuariosTab);
   const departamentosTab = useDashboardUiStore((state) => state.departamentosTab);
   const setDepartamentosTab = useDashboardUiStore((state) => state.setDepartamentosTab);
+  const isSidebarCollapsed = useDashboardUiStore((state) => state.isSidebarCollapsed);
 
   const showOverviewSection =
     activeNav === 'dashboard' ||
-    activeNav === 'billing' ||
     activeNav === 'notifications';
+
+  const showComunicadosSection = activeNav === 'comunicados';
 
   const showProfileSection = activeNav === 'profile';
 
-  const showUsuariosSection =
-    activeNav === 'usuarios' || activeNav === 'tables';
+  const showUsuariosSection = activeNav === 'usuarios';
 
-  const showRolesAndPermisosSection =
-    activeNav === 'roles-permisos' || activeNav === 'tables';
+  const showRolesAndPermisosSection = activeNav === 'roles-permisos';
 
-  const showDepartamentosSection =
-    activeNav === 'departamentos' || activeNav === 'tables';
+  const showDepartamentosSection = activeNav === 'departamentos';
 
   return (
     <div className="min-h-svh bg-fondo text-texto-principal flex flex-col selection:bg-primario selection:text-sobre-primario">
@@ -48,7 +48,11 @@ export default function DashboardPage() {
       <DashboardSidebar />
 
       {/* Contenedor Principal desplazado a la derecha del Floating Sidebar en pantallas XL */}
-      <div className="flex-1 flex flex-col xl:pl-[18.25rem] transition-all">
+      <div
+        className={`flex-1 flex flex-col ${
+          isSidebarCollapsed ? 'xl:pl-[7.25rem]' : 'xl:pl-[18.25rem]'
+        } transition-all duration-300 ease-out`}
+      >
         {/* Header Minimalista con Breadcrumbs, Buscador Material, Perfil y Notificaciones */}
         <DashboardHeader />
 
@@ -71,11 +75,10 @@ export default function DashboardPage() {
                   role="tab"
                   aria-selected={usuariosTab === 'listado'}
                   onClick={() => setUsuariosTab('listado')}
-                  className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
-                    usuariosTab === 'listado'
-                      ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
-                      : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
-                  }`}
+                  className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${usuariosTab === 'listado'
+                    ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
+                    : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
+                    }`}
                 >
                   <Users className="w-4 h-4 shrink-0" />
                   <span>Directorio de Usuarios</span>
@@ -86,11 +89,10 @@ export default function DashboardPage() {
                   role="tab"
                   aria-selected={usuariosTab === 'registro'}
                   onClick={() => setUsuariosTab('registro')}
-                  className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
-                    usuariosTab === 'registro'
-                      ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
-                      : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
-                  }`}
+                  className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${usuariosTab === 'registro'
+                    ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
+                    : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
+                    }`}
                 >
                   <UserPlus className="w-4 h-4 shrink-0" />
                   <span>Registro de Usuario</span>
@@ -133,8 +135,8 @@ export default function DashboardPage() {
                   aria-selected={rbacTab === 'roles'}
                   onClick={() => setRbacTab('roles')}
                   className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${rbacTab === 'roles'
-                      ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
-                      : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
+                    ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
+                    : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
                     }`}
                 >
                   <Shield className="w-4 h-4 shrink-0" />
@@ -147,8 +149,8 @@ export default function DashboardPage() {
                   aria-selected={rbacTab === 'permisos'}
                   onClick={() => setRbacTab('permisos')}
                   className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${rbacTab === 'permisos'
-                      ? 'bg-gradient-to-r from-[#28a45a] to-[#1e7e46] text-white shadow-[0_8px_20px_-4px_rgba(30,126,70,0.45)]'
-                      : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
+                    ? 'bg-gradient-to-r from-[#28a45a] to-[#1e7e46] text-white shadow-[0_8px_20px_-4px_rgba(30,126,70,0.45)]'
+                    : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
                     }`}
                 >
                   <KeyRound className="w-4 h-4 shrink-0" />
@@ -187,11 +189,10 @@ export default function DashboardPage() {
                   role="tab"
                   aria-selected={departamentosTab === 'departamentos'}
                   onClick={() => setDepartamentosTab('departamentos')}
-                  className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
-                    departamentosTab === 'departamentos'
-                      ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
-                      : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
-                  }`}
+                  className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${departamentosTab === 'departamentos'
+                    ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
+                    : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
+                    }`}
                 >
                   <Building2 className="w-4 h-4 shrink-0" />
                   <span>Departamentos Corporativos</span>
@@ -202,11 +203,10 @@ export default function DashboardPage() {
                   role="tab"
                   aria-selected={departamentosTab === 'sucursales'}
                   onClick={() => setDepartamentosTab('sucursales')}
-                  className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
-                    departamentosTab === 'sucursales'
-                      ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
-                      : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
-                  }`}
+                  className={`min-h-[2.75rem] px-5 py-2 rounded-full text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${departamentosTab === 'sucursales'
+                    ? 'bg-gradient-to-r from-oferta to-primario text-sobre-primario shadow-terra-flotante'
+                    : 'text-texto-suave hover:text-texto-principal hover:bg-superficie-2'
+                    }`}
                 >
                   <Store className="w-4 h-4 shrink-0" />
                   <span>Sucursales y Sedes</span>
@@ -229,6 +229,18 @@ export default function DashboardPage() {
                 </div>
               </SlideFadeTransition>
             </section>
+          )}
+
+          {/* Vista Oficial de Gestión de Comunicados */}
+          {showComunicadosSection && (
+            <SlideFadeTransition
+              direction="vertical"
+              offset={24}
+              preset="smooth"
+              transitionKey="dashboard-comunicados-view"
+            >
+              <ComunicadosManagementSection />
+            </SlideFadeTransition>
           )}
 
           {/* Vista de Perfil Corporativo del Usuario Autenticado (Edición sin contraseña) */}

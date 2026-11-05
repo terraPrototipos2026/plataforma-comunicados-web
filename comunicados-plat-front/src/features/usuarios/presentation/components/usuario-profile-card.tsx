@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   UserCircle2,
   User,
@@ -33,48 +33,38 @@ export function UsuarioProfileCard() {
   const { data: departamentos = [], isLoading: isLoadingDepts } = useDepartamentosQuery();
   const updateMutation = useUpdateUsuarioMutation();
 
-  const [nombre, setNombre] = useState(authUser?.nombre ?? '');
-  const [correo, setCorreo] = useState(authUser?.correo ?? '');
-  const [telefono, setTelefono] = useState('');
-  const [departamento, setDepartamento] = useState(authUser?.departamento ?? '');
-
-  const rolActual = usuarioDetalle?.rol ?? authUser?.rol ?? 'Sin rol';
-
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (usuarioDetalle) {
-      setNombre(usuarioDetalle.nombre);
-      setCorreo(usuarioDetalle.correo);
-      setTelefono(usuarioDetalle.telefono ?? '');
-      setDepartamento(usuarioDetalle.departamento);
-    } else if (authUser) {
-      setNombre(authUser.nombre);
-      setCorreo(authUser.correo);
-      setDepartamento(authUser.departamento);
-    }
-  }, [usuarioDetalle, authUser]);
+  // Derivamos valores iniciales o actuales cuando el usuario no los ha modificado manualmente
+  const defaultNombre = usuarioDetalle?.nombre ?? authUser?.nombre ?? '';
+  const defaultCorreo = usuarioDetalle?.correo ?? authUser?.correo ?? '';
+  const defaultTelefono = usuarioDetalle?.telefono ?? '';
+  const defaultDepartamento = usuarioDetalle?.departamento ?? authUser?.departamento ?? '';
+  const rolActual = usuarioDetalle?.rol ?? authUser?.rol ?? 'Sin rol';
+
+  const [nombre, setNombre] = useState<string | null>(null);
+  const [correo, setCorreo] = useState<string | null>(null);
+  const [telefono, setTelefono] = useState<string | null>(null);
+  const [departamento, setDepartamento] = useState<string | null>(null);
+
+  const currentNombre = nombre ?? defaultNombre;
+  const currentCorreo = correo ?? defaultCorreo;
+  const currentTelefono = telefono ?? defaultTelefono;
+  const currentDepartamento = departamento ?? defaultDepartamento;
 
   const handleReset = () => {
     setErrorMessage(null);
     setSuccessMessage(null);
-    if (usuarioDetalle) {
-      setNombre(usuarioDetalle.nombre);
-      setCorreo(usuarioDetalle.correo);
-      setTelefono(usuarioDetalle.telefono ?? '');
-      setDepartamento(usuarioDetalle.departamento);
-    } else if (authUser) {
-      setNombre(authUser.nombre);
-      setCorreo(authUser.correo);
-      setTelefono('');
-      setDepartamento(authUser.departamento);
-    }
+    setNombre(null);
+    setCorreo(null);
+    setTelefono(null);
+    setDepartamento(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!authUser) return;
+    if (!authUser?.idUsuario) return;
 
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -82,10 +72,11 @@ export function UsuarioProfileCard() {
     try {
       const updated = await updateMutation.mutateAsync({
         idUsuario: authUser.idUsuario,
-        nombre,
-        correo,
-        telefono: telefono.trim() ? telefono : undefined,
-        departamento,
+        nombre: currentNombre.trim(),
+        correo: currentCorreo.trim(),
+        telefono: currentTelefono.trim() ? currentTelefono.trim() : undefined,
+        rol: rolActual,
+        departamento: currentDepartamento,
       });
 
       updateUserInStore({
@@ -94,19 +85,19 @@ export function UsuarioProfileCard() {
         departamento: updated.departamento,
       });
 
-      setSuccessMessage('Tu información de perfil se ha actualizado correctamente.');
+      setSuccessMessage('Tu información de perfil se actualizó correctamente.');
     } catch (err) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
       } else {
-        setErrorMessage('No fue posible actualizar tu perfil.');
+        setErrorMessage('Ocurrió un error al actualizar tu información');
       }
     }
   };
 
-  const displayNombre = nombre || authUser?.nombre || 'Colaborador TERRA';
+  const displayNombre = currentNombre || authUser?.nombre || 'Colaborador TERRA';
   const displayRol = rolActual;
-  const displayDept = departamento || authUser?.departamento || 'Sin departamento';
+  const displayDept = currentDepartamento || authUser?.departamento || 'Sin departamento';
 
   return (
     <article
@@ -221,7 +212,7 @@ export function UsuarioProfileCard() {
                 <input
                   type="text"
                   required
-                  value={nombre}
+                  value={currentNombre}
                   onChange={(e) => setNombre(e.target.value)}
                   placeholder="Tu nombre completo"
                   className="w-full min-h-[3rem] px-4 py-2 rounded-terra-campo bg-superficie-2 border-[1.5px] border-borde focus:border-primario focus:bg-superficie-1 focus:shadow-terra-anillo focus:outline-none text-sm font-medium text-texto-principal placeholder:text-texto-placeholder"
@@ -237,7 +228,7 @@ export function UsuarioProfileCard() {
                 <input
                   type="email"
                   required
-                  value={correo}
+                  value={currentCorreo}
                   onChange={(e) => setCorreo(e.target.value)}
                   placeholder="correo@terra.com"
                   className="w-full min-h-[3rem] px-4 py-2 rounded-terra-campo bg-superficie-2 border-[1.5px] border-borde focus:border-primario focus:bg-superficie-1 focus:shadow-terra-anillo focus:outline-none text-sm font-medium text-texto-principal placeholder:text-texto-placeholder"
@@ -254,7 +245,7 @@ export function UsuarioProfileCard() {
                 </label>
                 <input
                   type="text"
-                  value={telefono}
+                  value={currentTelefono}
                   onChange={(e) => setTelefono(e.target.value)}
                   placeholder="+591 70000000"
                   className="w-full min-h-[3rem] px-4 py-2 rounded-terra-campo bg-superficie-2 border-[1.5px] border-borde focus:border-primario focus:bg-superficie-1 focus:shadow-terra-anillo focus:outline-none text-sm font-medium text-texto-principal placeholder:text-texto-placeholder"
@@ -293,7 +284,7 @@ export function UsuarioProfileCard() {
                 </label>
                 <select
                   required
-                  value={departamento}
+                  value={currentDepartamento}
                   onChange={(e) => setDepartamento(e.target.value)}
                   disabled={isLoadingDepts}
                   className="w-full min-h-[3rem] px-4 py-2 rounded-terra-campo bg-superficie-2 border-[1.5px] border-borde focus:border-primario focus:bg-superficie-1 focus:shadow-terra-anillo focus:outline-none text-sm font-medium text-texto-principal capitalize cursor-pointer disabled:opacity-50"

@@ -18,6 +18,7 @@ import { useDashboardUiStore } from '../store/use-dashboard-ui-store';
 
 const NAV_TITLES: Record<DashboardNavKey, string> = {
   dashboard: 'Dashboard',
+  comunicados: 'Gestión de Comunicados',
   usuarios: 'Gestión de Usuarios',
   'roles-permisos': 'Roles y Permisos (RBAC)',
   departamentos: 'Departamentos y Sucursales',

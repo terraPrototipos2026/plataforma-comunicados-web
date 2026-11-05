@@ -9,6 +9,7 @@ import { PermisosModule } from './modules/permisos/permisos.module.js';
 import { RolesModule } from './modules/roles/roles.module.js';
 import { SucursalesModule } from './modules/sucursales/sucursales.module.js';
 import { UsuariosModule } from './modules/usuarios/usuarios.module.js';
+import { ComunicadosModule } from './modules/comunicados/comunicados.module.js';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UsuariosModule } from './modules/usuarios/usuarios.module.js';
     RolesModule,
     SucursalesModule,
     UsuariosModule,
+    ComunicadosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

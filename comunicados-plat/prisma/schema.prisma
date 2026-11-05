@@ -68,6 +68,8 @@ model Usuario {
   rol            Roles        @relation(fields: [idRol], references: [idRol])
   departamento   Departamento @relation(fields: [idDepartamento], references: [idDepartamento])
   sesiones       Sesion[]
+  comunicadosEmitidos  Comunicado[]             @relation("UsuarioGeneraComunicados")
+  comunicadosRecibidos ComunicadoDestinatario[] @relation("UsuarioRecibeComunicados")
 
   @@index([idRol])
   @@index([idDepartamento])
@@ -89,5 +91,89 @@ model Sesion {
   @@index([idUsuario])
   @@index([refreshTokenHash])
   @@map("sesion")
+}
+
+model Comunicado {
+  idComunicado     String    @id @default(uuid()) @map("id_comunicado") @db.Uuid
+  codigo           String    @unique @db.VarChar(30)
+  titulo           String    @db.VarChar(150)
+  extracto         String?   @db.VarChar(280)
+  medioPublicacion String    @default("AVANZADO") @map("medio_publicacion") @db.VarChar(50)
+  prioridad        String    @default("NORMAL") @db.VarChar(30)
+  estado           String    @default("PUBLICADO") @db.VarChar(30)
+  tipoAlcance      String    @default("TODA_EMPRESA") @map("tipo_alcance") @db.VarChar(50)
+  fechaPublicacion DateTime? @default(now()) @map("fecha_publicacion")
+  fechaProgramada  DateTime? @map("fecha_programada")
+  idUsuario        String    @map("id_usuario") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  autor            Usuario                  @relation("UsuarioGeneraComunicados", fields: [idUsuario], references: [idUsuario])
+  cuerpo           Cuerpo?
+  imagenes         Imagenes[]
+  notificaciones   Notificacion[]
+  destinatarios    ComunicadoDestinatario[]
+
+  @@index([idUsuario])
+  @@index([estado, prioridad])
+  @@map("comunicado")
+}
+
+model Cuerpo {
+  idCuerpo      String     @id @default(uuid()) @map("id_cuerpo") @db.Uuid
+  contenido     String     @db.Text
+  urlArchivo    String?    @map("url_archivo") @db.VarChar(500)
+  nombreArchivo String?    @map("nombre_archivo") @db.VarChar(255)
+  tamanoBytes   Int?       @map("tamano_bytes")
+  numeroPaginas Int?       @map("numero_paginas")
+  idComunicado  String     @unique @map("id_comunicado") @db.Uuid
+
+  comunicado    Comunicado @relation(fields: [idComunicado], references: [idComunicado], onDelete: Cascade)
+
+  @@map("cuerpo")
+}
+
+model Imagenes {
+  idImagen      String     @id @default(uuid()) @map("id_imagen") @db.Uuid
+  urlImagen     String     @map("url_imagen") @db.VarChar(500)
+  nombreArchivo String?    @map("nombre_archivo") @db.VarChar(255)
+  tamanoBytes   Int?       @map("tamano_bytes")
+  esPortada     Boolean    @default(false) @map("es_portada")
+  orden         Int        @default(0)
+  idComunicado  String     @map("id_comunicado") @db.Uuid
+
+  comunicado    Comunicado @relation(fields: [idComunicado], references: [idComunicado], onDelete: Cascade)
+
+  @@index([idComunicado])
+  @@map("imagenes")
+}
+
+model ComunicadoDestinatario {
+  idComunicadoDestinatario String     @id @default(uuid()) @map("id_comunicado_destinatario") @db.Uuid
+  estadoLectura            String     @default("PENDIENTE") @map("estado_lectura") @db.VarChar(30)
+  fechaVisualizacion       DateTime?  @map("fecha_visualizacion")
+  fechaConfirmacion        DateTime?  @map("fecha_confirmacion")
+  idComunicado             String     @map("id_comunicado") @db.Uuid
+  idUsuario                String     @map("id_usuario") @db.Uuid
+
+  comunicado               Comunicado @relation(fields: [idComunicado], references: [idComunicado], onDelete: Cascade)
+  usuario                  Usuario    @relation("UsuarioRecibeComunicados", fields: [idUsuario], references: [idUsuario], onDelete: Cascade)
+
+  @@unique([idComunicado, idUsuario])
+  @@index([idUsuario, estadoLectura])
+  @@map("comunicado_destinatario")
+}
+
+model Notificacion {
+  idNotificacion String     @id @default(uuid()) @map("id_notificacion") @db.Uuid
+  tipo           String     @default("PUSH_MOVIL") @db.VarChar(50)
+  estado         String     @default("ENVIADA") @db.VarChar(30)
+  fechaEnvio     DateTime   @default(now()) @map("fecha_envio")
+  idComunicado   String     @map("id_comunicado") @db.Uuid
+
+  comunicado     Comunicado @relation(fields: [idComunicado], references: [idComunicado], onDelete: Cascade)
+
+  @@index([idComunicado])
+  @@map("notificacion")
 }
 
