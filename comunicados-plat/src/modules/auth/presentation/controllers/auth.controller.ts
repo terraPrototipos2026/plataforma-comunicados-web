@@ -16,6 +16,7 @@ import {
   ApiResponse,
   ApiCookieAuth,
   ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { AuthService } from '../../application/services/auth.service.js';
@@ -23,6 +24,12 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard.js';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard.js';
 import { RegisterRequestDto } from '../dtos/register.request.dto.js';
 import { LoginRequestDto } from '../dtos/login.request.dto.js';
+import {
+  RegisterResponseDto,
+  AuthTokensResponseDto,
+  ProfileResponseDto,
+  MessageResponseDto,
+} from '../dtos/auth.response.dto.js';
 
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -34,12 +41,17 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @ApiBody({ type: RegisterRequestDto })
   @ApiOperation({
     summary: 'Registrar un nuevo usuario',
     description:
       'Crea un usuario con contraseña cifrada en Argon2id, buscando internamente el UUID del rol y departamento por sus nombres.',
   })
-  @ApiResponse({ status: 201, description: 'Usuario registrado exitosamente.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Usuario registrado exitosamente.',
+    type: RegisterResponseDto,
+  })
   @ApiResponse({ status: 400, description: 'Datos de entrada inválidos.' })
   @ApiResponse({ status: 404, description: 'El rol o departamento especificado no existe.' })
   @ApiResponse({ status: 409, description: 'El correo electrónico ya se encuentra registrado.' })
@@ -49,12 +61,17 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: LoginRequestDto })
   @ApiOperation({
     summary: 'Iniciar sesión',
     description:
       'Valida credenciales con Argon2id, genera el Access Token JWT (15m) en la respuesta y el Refresh Token (7d) persistido en BD y enviado en una cookie HttpOnly, Secure, SameSite: strict.',
   })
-  @ApiResponse({ status: 200, description: 'Inicio de sesión exitoso. Retorna Access Token y datos de usuario.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Inicio de sesión exitoso. Retorna Access Token y datos de usuario.',
+    type: AuthTokensResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas.' })
   async login(
     @Body() dto: LoginRequestDto,
@@ -84,7 +101,11 @@ export class AuthController {
     description:
       'Lee la cookie HttpOnly refresh_token, valida la sesión en BD, invalida/revoca la sesión anterior (rotación de tokens) y emite un nuevo par de tokens.',
   })
-  @ApiResponse({ status: 200, description: 'Tokens rotados y renovados exitosamente.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tokens rotados y renovados exitosamente.',
+    type: AuthTokensResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Cookie ausente o sesión inválida/expirada.' })
   async refresh(
     @Req() req: Request,
@@ -117,7 +138,11 @@ export class AuthController {
     summary: 'Cerrar sesión',
     description: 'Marca la sesión activa como revocada en la base de datos y elimina la cookie de refresh token.',
   })
-  @ApiResponse({ status: 200, description: 'Sesión cerrada exitosamente.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Sesión cerrada exitosamente.',
+    type: MessageResponseDto,
+  })
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -144,7 +169,11 @@ export class AuthController {
     summary: 'Obtener perfil del usuario autenticado (Ruta protegida)',
     description: 'Requiere el header `Authorization: Bearer <token>`. Retorna la información extraída del JWT (id, correo, rol y lista de permisos).',
   })
-  @ApiResponse({ status: 200, description: 'Perfil obtenido correctamente.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Perfil obtenido correctamente.',
+    type: ProfileResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Token no proporcionado o inválido/expirado.' })
   getProfile(@Req() req: AuthenticatedRequest) {
     return {

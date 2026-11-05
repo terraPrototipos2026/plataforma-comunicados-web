@@ -75,19 +75,15 @@ export const useThemeStore = create<ThemeState>((set) => ({
     }),
 
   resetAccessibility: () =>
-    set((state) => {
+    set(() => {
       const next = {
-        ...state,
+        theme: 'light' as ThemeMode,
         highContrast: false,
         dyslexicFont: false,
         fontScale: 'normal' as FontScaleMode,
       };
       syncDocumentClasses(next);
-      return {
-        highContrast: false,
-        dyslexicFont: false,
-        fontScale: 'normal',
-      };
+      return next;
     }),
 }));
 

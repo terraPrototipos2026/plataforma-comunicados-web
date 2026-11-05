@@ -20,6 +20,10 @@
     --color-exito: #1e7e46;
     --color-alerta: #c0392b;
     --color-oferta: #e0304a;
+    --color-footer-fondo: #1e1917;
+    --color-footer-borde: #332a28;
+    --color-footer-texto: #f4ede8;
+    --color-footer-texto-suave: #b5a79f;
   }
 
   html[data-theme="dark"] {
@@ -34,6 +38,10 @@
     --color-texto-suave: #b5a79f;
     --color-oferta: #e0304a;
     --color-exito: #58c986;
+    --color-footer-fondo: #110d0c;
+    --color-footer-borde: #2e2624;
+    --color-footer-texto: #f4ede8;
+    --color-footer-texto-suave: #b5a79f;
   }
 
   html.a11y-contraste {
@@ -49,6 +57,10 @@
     --color-primario-hover: #ffe14d;
     --color-sobre-primario: #000000;
     --color-exito: #7cff9b;
+    --color-footer-fondo: #000000;
+    --color-footer-borde: #ffffff;
+    --color-footer-texto: #ffffff;
+    --color-footer-texto-suave: #ffffff;
   }
 
   body {
@@ -80,6 +92,10 @@
   --color-exito: var(--color-exito);
   --color-alerta: var(--color-alerta);
   --color-oferta: var(--color-oferta);
+  --color-footer-fondo: var(--color-footer-fondo);
+  --color-footer-borde: var(--color-footer-borde);
+  --color-footer-texto: var(--color-footer-texto);
+  --color-footer-texto-suave: var(--color-footer-texto-suave);
 
   --radius-terra-chico: 0.625rem;
   --radius-terra-boton: 0.75rem;

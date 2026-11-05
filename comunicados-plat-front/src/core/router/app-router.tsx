@@ -1,13 +1,13 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router';
+import { authContainer } from '../../features/auth/infrastructure/container';
+import { authRoutes } from '../../features/auth/presentation/routes/auth.routes';
 import { landingRoutes } from '../../features/landing/presentation/routes/landing.routes';
+import { useAuthStore } from '../store/use-auth-store';
 
 const router = createBrowserRouter([
   ...landingRoutes,
-  {
-    path: '/login',
-    element: <Navigate to="/" replace />,
-  },
+  ...authRoutes,
   {
     path: '*',
     element: <Navigate to="/" replace />,
@@ -15,6 +15,30 @@ const router = createBrowserRouter([
 ]);
 
 export function AppRouter() {
+  const setSession = useAuthStore((state) => state.setSession);
+  const clearSession = useAuthStore((state) => state.clearSession);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    authContainer.refreshSessionUseCase
+      .execute()
+      .then((session) => {
+        if (isMounted) {
+          setSession(session.accessToken, session.user);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          clearSession();
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setSession, clearSession]);
+
   return (
     <Suspense
       fallback={
@@ -32,4 +56,3 @@ export function AppRouter() {
     </Suspense>
   );
 }
-

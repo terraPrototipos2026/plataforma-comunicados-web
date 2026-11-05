@@ -1,0 +1,1 @@
+export const ROL_REPOSITORY_TOKEN = Symbol('ROL_REPOSITORY_TOKEN');

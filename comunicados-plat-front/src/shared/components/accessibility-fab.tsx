@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Accessibility, Type, Contrast, Eye, RotateCcw, X } from 'lucide-react';
 import { useThemeStore } from '../../core/store/use-theme-store';
+import { SlideFadeTransition } from './slide-fade-transition';
 
 export function AccessibilityFab() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,7 +20,14 @@ export function AccessibilityFab() {
       aria-label="Herramientas de accesibilidad"
       className="fixed left-4 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-40"
     >
-      {isOpen && (
+      <SlideFadeTransition
+        isVisible={isOpen}
+        direction="horizontal"
+        exitMode="reverse"
+        offset={40}
+        preset="smooth"
+        duration={0.28}
+      >
         <div className="mb-3 w-72 rounded-terra-modal bg-superficie-1 border-[1.5px] border-borde p-4 shadow-terra text-left">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-borde-suave">
             <div>
@@ -42,11 +50,10 @@ export function AccessibilityFab() {
             <button
               type="button"
               onClick={toggleHighContrast}
-              className={`min-h-[2.75rem] px-3 py-2 rounded-terra-boton border text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
-                highContrast
+              className={`min-h-[2.75rem] px-3 py-2 rounded-terra-boton border text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${highContrast
                   ? 'bg-primario text-sobre-primario border-primario'
                   : 'bg-superficie-2 text-texto-principal border-borde hover:border-primario'
-              }`}
+                }`}
             >
               <span className="flex items-center gap-2">
                 <Contrast className="w-4 h-4" />
@@ -58,11 +65,10 @@ export function AccessibilityFab() {
             <button
               type="button"
               onClick={toggleFontScale}
-              className={`min-h-[2.75rem] px-3 py-2 rounded-terra-boton border text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
-                fontScale === 'large'
+              className={`min-h-[2.75rem] px-3 py-2 rounded-terra-boton border text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${fontScale === 'large'
                   ? 'bg-primario text-sobre-primario border-primario'
                   : 'bg-superficie-2 text-texto-principal border-borde hover:border-primario'
-              }`}
+                }`}
             >
               <span className="flex items-center gap-2">
                 <Type className="w-4 h-4" />
@@ -74,11 +80,10 @@ export function AccessibilityFab() {
             <button
               type="button"
               onClick={toggleDyslexicFont}
-              className={`min-h-[2.75rem] px-3 py-2 rounded-terra-boton border text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
-                dyslexicFont
+              className={`min-h-[2.75rem] px-3 py-2 rounded-terra-boton border text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${dyslexicFont
                   ? 'bg-primario text-sobre-primario border-primario'
                   : 'bg-superficie-2 text-texto-principal border-borde hover:border-primario'
-              }`}
+                }`}
             >
               <span className="flex items-center gap-2">
                 <Eye className="w-4 h-4" />
@@ -97,7 +102,7 @@ export function AccessibilityFab() {
             </button>
           </div>
         </div>
-      )}
+      </SlideFadeTransition>
 
       <button
         type="button"

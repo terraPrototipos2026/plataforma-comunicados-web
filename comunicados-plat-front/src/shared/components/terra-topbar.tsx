@@ -1,9 +1,12 @@
 import { Link } from 'react-router';
-import { Moon, Sun, Contrast, LogIn, ShieldCheck } from 'lucide-react';
-import { useThemeStore } from '../../core/store/use-theme-store';
+import { LogIn, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
+import { useAuthStore } from '../../core/store/use-auth-store';
+import { useLogoutMutation } from '../../features/auth/presentation/hooks/use-logout-mutation';
+import { SettingsModalTrigger } from './settings-modal';
 
 export function TerraTopbar() {
-  const { theme, highContrast, toggleTheme, toggleHighContrast } = useThemeStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const logoutMutation = useLogoutMutation();
 
   return (
     <header className="sticky top-0 z-50 min-h-[4.25rem] bg-superficie-1/95 backdrop-blur-md border-b border-borde-suave pt-[env(safe-area-inset-top)] px-4 sm:px-8 flex items-center justify-between transition-colors">
@@ -59,40 +62,45 @@ export function TerraTopbar() {
           </a>
         </nav>
 
-        {/* Controles Táctiles: Tema, Alto Contraste y Acceso */}
+        {/* Controles Táctiles: Tuerca de Configuraciones y Acceso / Sesión */}
         <div className="flex items-center gap-2 sm:gap-2.5">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={theme === 'light' ? 'Activar modo oscuro cálido' : 'Activar modo claro'}
-            title={theme === 'light' ? 'Modo oscuro cálido' : 'Modo claro'}
-            className="min-w-[2.75rem] min-h-[2.75rem] w-11 h-11 rounded-full border border-borde bg-superficie-2 text-texto-principal flex items-center justify-center hover:border-primario hover:text-primario transition-colors cursor-pointer"
-          >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </button>
+          <SettingsModalTrigger />
 
-          <button
-            type="button"
-            onClick={toggleHighContrast}
-            aria-label="Alternar modo de alto contraste accesible"
-            title="Alto contraste accesible"
-            aria-pressed={highContrast}
-            className={`min-w-[2.75rem] min-h-[2.75rem] w-11 h-11 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
-              highContrast
-                ? 'bg-primario text-sobre-primario border-primario'
-                : 'border-borde bg-superficie-2 text-texto-principal hover:border-primario hover:text-primario'
-            }`}
-          >
-            <Contrast className="w-5 h-5" />
-          </button>
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2 min-h-[2.75rem] px-3.5 py-1 rounded-full bg-superficie-2 border border-borde text-left">
+                <UserCheck className="w-4 h-4 text-primario shrink-0" />
+                <div className="flex flex-col leading-tight">
+                  <span className="text-xs font-extrabold text-texto-principal truncate max-w-[9rem]">
+                    {user.nombre}
+                  </span>
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-primario">
+                    {user.departamento} • {user.rol}
+                  </span>
+                </div>
+              </div>
 
-          <Link
-            to="/login"
-            className="min-h-[2.75rem] h-11 px-5 rounded-full bg-primario text-sobre-primario font-bold hover:bg-primario-hover transition-all shadow-terra-flotante flex items-center gap-2 text-sm"
-          >
-            <LogIn className="w-4 h-4 shrink-0" />
-            <span>Iniciar Sesión</span>
-          </Link>
+              <button
+                type="button"
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                className="min-h-[2.75rem] h-11 px-4 rounded-full bg-superficie-2 hover:bg-primario-claro border-[1.5px] border-borde hover:border-primario text-texto-principal hover:text-primario font-bold transition-colors flex items-center gap-2 text-sm cursor-pointer disabled:opacity-60"
+              >
+                <LogOut className="w-4 h-4 shrink-0" />
+                <span className="hidden md:inline">Salir</span>
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="min-h-[2.75rem] h-11 px-5 rounded-full bg-primario text-sobre-primario font-bold hover:bg-primario-hover transition-all shadow-terra-flotante flex items-center gap-2 text-sm"
+            >
+              <LogIn className="w-4 h-4 shrink-0" />
+              <span>Iniciar Sesión</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>
@@ -114,4 +122,3 @@ export function TopInstitutionalBanner() {
     </div>
   );
 }
-
