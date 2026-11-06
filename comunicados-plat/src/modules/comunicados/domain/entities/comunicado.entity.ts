@@ -16,6 +16,20 @@ export interface ImagenProps {
   orden: number;
 }
 
+export interface DestinatarioDetalleProps {
+  idUsuario: string;
+  nombre: string;
+  correo: string;
+  rol: string;
+  idDepartamento: string;
+  departamentoNombre: string;
+  idSucursal: string;
+  sucursalNombre: string;
+  estadoLectura: string; // 'PENDIENTE' | 'VISUALIZADO' | 'CONFIRMADO'
+  fechaVisualizacion?: Date | null;
+  fechaConfirmacion?: Date | null;
+}
+
 export interface ComunicadoProps {
   idComunicado: string;
   codigo: string;
@@ -31,6 +45,7 @@ export interface ComunicadoProps {
   autorNombre?: string;
   cuerpo?: CuerpoProps | null;
   imagenes?: ImagenProps[];
+  destinatariosDetalle?: DestinatarioDetalleProps[];
   totalDestinatarios?: number;
   totalConfirmados?: number;
   createdAt?: Date;
@@ -52,6 +67,7 @@ export class Comunicado {
   private _autorNombre?: string;
   private _cuerpo: CuerpoProps | null;
   private _imagenes: ImagenProps[];
+  private _destinatariosDetalle: DestinatarioDetalleProps[];
   private _totalDestinatarios: number;
   private _totalConfirmados: number;
   private readonly _createdAt: Date;
@@ -72,6 +88,7 @@ export class Comunicado {
     this._autorNombre = props.autorNombre;
     this._cuerpo = props.cuerpo ?? null;
     this._imagenes = props.imagenes ?? [];
+    this._destinatariosDetalle = props.destinatariosDetalle ?? [];
     this._totalDestinatarios = props.totalDestinatarios ?? 0;
     this._totalConfirmados = props.totalConfirmados ?? 0;
     this._createdAt = props.createdAt ?? new Date();
@@ -118,6 +135,7 @@ export class Comunicado {
   public get autorNombre(): string | undefined { return this._autorNombre; }
   public get cuerpo(): CuerpoProps | null { return this._cuerpo; }
   public get imagenes(): ImagenProps[] { return this._imagenes; }
+  public get destinatariosDetalle(): DestinatarioDetalleProps[] { return this._destinatariosDetalle; }
   public get totalDestinatarios(): number { return this._totalDestinatarios; }
   public get totalConfirmados(): number { return this._totalConfirmados; }
   public get createdAt(): Date { return this._createdAt; }

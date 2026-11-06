@@ -53,7 +53,7 @@ export class ComunicadoPrismaRepository implements ComunicadoRepositoryPort {
   }
 
   async findById(idComunicado: string): Promise<Comunicado | null> {
-    const record = await this.prisma.comunicado.findUnique({
+    let record = await this.prisma.comunicado.findUnique({
       where: { idComunicado },
       include: {
         autor: true,
@@ -61,11 +61,70 @@ export class ComunicadoPrismaRepository implements ComunicadoRepositoryPort {
         imagenes: {
           orderBy: { orden: 'asc' },
         },
-        destinatarios: true,
+        destinatarios: {
+          include: {
+            usuario: {
+              include: {
+                rol: true,
+                departamento: {
+                  include: {
+                    sucursal: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
-    return record ? ComunicadoMapper.toDomain(record) : null;
+    if (!record) return null;
+
+    // Si el comunicado no tiene destinatarios registrados en la tabla relacional,
+    // se resuelven según su tipo de alcance para asegurar la visualización completa.
+    if (!record.destinatarios || record.destinatarios.length === 0) {
+      const calculo = await this.estimarAlcance({
+        tipoAlcance: record.tipoAlcance,
+      });
+
+      if (calculo.targetUserIds.length > 0) {
+        await this.prisma.comunicadoDestinatario.createMany({
+          data: calculo.targetUserIds.map((userId) => ({
+            idComunicado: record!.idComunicado,
+            idUsuario: userId,
+            estadoLectura: 'PENDIENTE',
+          })),
+          skipDuplicates: true,
+        });
+
+        record = await this.prisma.comunicado.findUnique({
+          where: { idComunicado },
+          include: {
+            autor: true,
+            cuerpo: true,
+            imagenes: {
+              orderBy: { orden: 'asc' },
+            },
+            destinatarios: {
+              include: {
+                usuario: {
+                  include: {
+                    rol: true,
+                    departamento: {
+                      include: {
+                        sucursal: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+    }
+
+    return record ? ComunicadoMapper.toDomain(record as any) : null;
   }
 
   async create(data: CreateComunicadoPersistenceData): Promise<Comunicado> {

@@ -84,14 +84,21 @@ export class CreateComunicadoUseCase {
       destinatarioIds: targetUserIds,
     });
 
-    // Notificar en background vía Firebase Push a los colaboradores destinatarios
+    // Notificar en background vía Firebase Push a los colaboradores destinatarios (Móvil y Web)
     if (created.estado === 'PUBLICADO' && targetUserIds.length > 0) {
+      const portada = created.portadaUrl || created.imagenes?.[0]?.urlImagen || undefined;
       this.notificationsService
         .sendToMultipleUsers(
           targetUserIds,
           `Nuevo Comunicado: ${created.titulo}`,
           created.extracto || 'Se ha publicado un nuevo comunicado oficial.',
-          `/dashboard`,
+          {
+            idComunicado: created.idComunicado,
+            codigo: created.codigo,
+            prioridad: created.prioridad,
+            url: `/dashboard`,
+            imageUrl: portada,
+          },
         )
         .catch((err) => {
           console.warn('⚠️ Error al enviar notificaciones push del comunicado:', err);

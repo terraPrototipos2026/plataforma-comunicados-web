@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -82,14 +83,34 @@ export class NotificationsController {
     return this.notificationsService.getUserDevices(idUsuario);
   }
 
+  @Get('history')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Obtener el historial de notificaciones y comunicados para el usuario autenticado',
+  })
+  @ApiResponse({ status: 200, description: 'Historial de notificaciones con métricas de lectura' })
+  async getHistory(@Req() req: AuthenticatedRequest) {
+    const idUsuario = req.user?.sub;
+    return this.notificationsService.getHistory(idUsuario);
+  }
+
   @Post('send')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Enviar una notificación push a un usuario específico en todos sus dispositivos',
+    summary: 'Enviar una notificación push a un usuario específico en todos sus dispositivos (Exclusivo Administrador)',
   })
   @ApiBody({ type: SendNotificationDto })
   @ApiResponse({ status: 200, description: 'Resultado del envío push' })
-  async sendNotification(@Body() dto: SendNotificationDto) {
+  async sendNotification(
+    @Body() dto: SendNotificationDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const rol = req.user?.rol?.toLowerCase() ?? '';
+    const esAdmin = rol.includes('admin') || rol.includes('gerent');
+    if (!esAdmin) {
+      throw new ForbiddenException('Acceso restringido: Solo roles administrativos pueden emitir notificaciones push directas.');
+    }
+
     return this.notificationsService.sendToUser(
       dto.userId,
       dto.title,

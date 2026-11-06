@@ -2,6 +2,9 @@ import { type PrismaClient } from '@prisma/client';
 
 export const ROLES_SEED_DATA = [
   { nombre: 'administrador general' },
+  { nombre: 'administrador sucursal' },
+  { nombre: 'encargado de departamento' },
+  { nombre: 'operario' },
 ];
 
 export async function seedRoles(prisma: PrismaClient) {
@@ -16,4 +19,3 @@ export async function seedRoles(prisma: PrismaClient) {
     console.log(`  ✓ Rol listo: [id: ${record.idRol}] "${record.nombre}"`);
   }
 }
-

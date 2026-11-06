@@ -69,6 +69,21 @@ export class ComunicadoResponseDto {
     orden: number;
   }[];
 
+  @ApiPropertyOptional()
+  destinatariosDetalle?: {
+    idUsuario: string;
+    nombre: string;
+    correo: string;
+    rol: string;
+    idDepartamento: string;
+    departamentoNombre: string;
+    idSucursal: string;
+    sucursalNombre: string;
+    estadoLectura: string;
+    fechaVisualizacion?: Date | null;
+    fechaConfirmacion?: Date | null;
+  }[];
+
   @ApiProperty()
   createdAt: Date;
 
@@ -92,6 +107,7 @@ export class ComunicadoResponseDto {
     dto.totalAdjuntosPdf = c.cuerpo?.urlArchivo ? 1 : 0;
     dto.cuerpo = c.cuerpo;
     dto.imagenes = c.imagenes;
+    dto.destinatariosDetalle = c.destinatariosDetalle;
     dto.createdAt = c.createdAt;
     return dto;
   }

@@ -11,7 +11,19 @@ export type PrismaComunicadoFull = PrismaComunicado & {
   autor?: PrismaUsuario;
   cuerpo?: PrismaCuerpo | null;
   imagenes?: PrismaImagenes[];
-  destinatarios?: PrismaDestinatario[];
+  destinatarios?: (PrismaDestinatario & {
+    usuario?: PrismaUsuario & {
+      rol?: { nombre: string };
+      departamento?: {
+        idDepartamento: string;
+        nombre: string;
+        sucursal?: {
+          idSucursal: string;
+          nombre: string;
+        };
+      };
+    };
+  })[];
   _count?: {
     destinatarios?: number;
   };
@@ -23,6 +35,22 @@ export class ComunicadoMapper {
     const totalConfirmados = raw.destinatarios
       ? raw.destinatarios.filter((d) => d.estadoLectura === 'CONFIRMADO').length
       : 0;
+
+    const destinatariosDetalle = raw.destinatarios
+      ?.filter((d) => d.usuario)
+      .map((d) => ({
+        idUsuario: d.idUsuario,
+        nombre: d.usuario!.nombre,
+        correo: d.usuario!.correo,
+        rol: d.usuario!.rol?.nombre ?? 'Colaborador',
+        idDepartamento: d.usuario!.departamento?.idDepartamento ?? '',
+        departamentoNombre: d.usuario!.departamento?.nombre ?? 'Sin Departamento',
+        idSucursal: d.usuario!.departamento?.sucursal?.idSucursal ?? '',
+        sucursalNombre: d.usuario!.departamento?.sucursal?.nombre ?? 'Sin Sucursal',
+        estadoLectura: d.estadoLectura,
+        fechaVisualizacion: d.fechaVisualizacion,
+        fechaConfirmacion: d.fechaConfirmacion,
+      })) ?? [];
 
     return Comunicado.reconstitute({
       idComunicado: raw.idComunicado,
@@ -57,6 +85,7 @@ export class ComunicadoMapper {
             orden: img.orden,
           }))
         : [],
+      destinatariosDetalle,
       totalDestinatarios,
       totalConfirmados,
       createdAt: raw.createdAt,

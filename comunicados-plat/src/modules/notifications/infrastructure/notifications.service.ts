@@ -10,6 +10,15 @@ export interface MulticastResult {
   message?: string;
 }
 
+export interface PushNotificationOptions {
+  idComunicado?: string;
+  codigo?: string;
+  prioridad?: 'NORMAL' | 'IMPORTANTE' | 'URGENTE' | string;
+  url?: string;
+  imageUrl?: string;
+  data?: Record<string, string>;
+}
+
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
@@ -61,8 +70,85 @@ export class NotificationsService {
     });
   }
 
-  // Enviar a un usuario en todos sus dispositivos
-  async sendToUser(idUsuario: string, title: string, body: string, url?: string): Promise<MulticastResult> {
+  // Obtener historial de notificaciones con estado de lectura del usuario
+  async getHistory(idUsuario?: string) {
+    const notificaciones = await this.prisma.notificacion.findMany({
+      where: {
+        comunicado: {
+          estado: { in: ['PUBLICADO', 'PROGRAMADO'] },
+        },
+      },
+      include: {
+        comunicado: {
+          select: {
+            idComunicado: true,
+            codigo: true,
+            titulo: true,
+            extracto: true,
+            prioridad: true,
+            fechaPublicacion: true,
+            tipoAlcance: true,
+            medioPublicacion: true,
+            imagenes: {
+              where: { esPortada: true },
+              select: { urlImagen: true },
+              take: 1,
+            },
+            destinatarios: idUsuario
+              ? {
+                  where: { idUsuario },
+                  select: {
+                    estadoLectura: true,
+                    fechaVisualizacion: true,
+                    fechaConfirmacion: true,
+                  },
+                }
+              : false,
+          },
+        },
+      },
+      orderBy: { fechaEnvio: 'desc' },
+      take: 30,
+    });
+
+    const items = notificaciones.map((n) => {
+      const dest = n.comunicado.destinatarios?.[0];
+      const isConfirmed = dest?.estadoLectura === 'CONFIRMADO';
+      return {
+        idNotificacion: n.idNotificacion,
+        tipo: n.tipo,
+        estado: n.estado,
+        fechaEnvio: n.fechaEnvio,
+        leido: isConfirmed,
+        comunicado: {
+          idComunicado: n.comunicado.idComunicado,
+          codigo: n.comunicado.codigo,
+          titulo: n.comunicado.titulo,
+          extracto: n.comunicado.extracto,
+          prioridad: n.comunicado.prioridad,
+          fechaPublicacion: n.comunicado.fechaPublicacion,
+          tipoAlcance: n.comunicado.tipoAlcance,
+          portadaUrl: n.comunicado.imagenes?.[0]?.urlImagen ?? null,
+        },
+      };
+    });
+
+    const unreadCount = items.filter((item) => !item.leido).length;
+
+    return {
+      total: items.length,
+      unreadCount,
+      notifications: items,
+    };
+  }
+
+  // Enviar a un usuario en todos sus dispositivos (Web, Android, iOS)
+  async sendToUser(
+    idUsuario: string,
+    title: string,
+    body: string,
+    options?: PushNotificationOptions | string,
+  ): Promise<MulticastResult> {
     const devices = await this.prisma.pushDevice.findMany({
       where: { idUsuario },
       select: { token: true },
@@ -77,11 +163,16 @@ export class NotificationsService {
     }
 
     const tokens = [...new Set(devices.map((d) => d.token))];
-    return this.sendMulticast(tokens, title, body, url);
+    return this.sendMulticast(tokens, title, body, options);
   }
 
-  // Enviar a múltiples usuarios (ej: destinatarios de un comunicado)
-  async sendToMultipleUsers(userIds: string[], title: string, body: string, url?: string): Promise<MulticastResult> {
+  // Enviar a múltiples usuarios (destinatarios de comunicados oficiales)
+  async sendToMultipleUsers(
+    userIds: string[],
+    title: string,
+    body: string,
+    options?: PushNotificationOptions | string,
+  ): Promise<MulticastResult> {
     if (userIds.length === 0) {
       return { successCount: 0, failureCount: 0 };
     }
@@ -96,29 +187,92 @@ export class NotificationsService {
       return { successCount: 0, failureCount: 0, message: 'Ningún destinatario tiene dispositivos registrados.' };
     }
 
-    return this.sendMulticast(tokens, title, body, url);
+    return this.sendMulticast(tokens, title, body, options);
   }
 
-  // Enviar directamente a un token específico
-  async sendToToken(token: string, title: string, body: string, url?: string) {
+  // Enviar directamente a un token específico (Multiplataforma)
+  async sendToToken(token: string, title: string, body: string, options?: PushNotificationOptions | string) {
+    const opts = typeof options === 'string' ? { url: options } : (options ?? {});
+    const url = opts.url ?? '/dashboard';
+    const isUrgente = opts.prioridad === 'URGENTE';
+
+    const dataPayload: Record<string, string> = {
+      title,
+      body,
+      url,
+      prioridad: opts.prioridad ?? 'NORMAL',
+      click_action: 'FLUTTER_NOTIFICATION_CLICK',
+      ...(opts.imageUrl ? { imageUrl: opts.imageUrl } : {}),
+      ...(opts.idComunicado ? { idComunicado: opts.idComunicado } : {}),
+      ...(opts.codigo ? { codigo: opts.codigo } : {}),
+      ...(opts.data ?? {}),
+    };
+
     const message: Message = {
       token,
-      notification: { title, body },
-      data: url ? { url } : undefined,
-      webpush: url
-        ? {
-            fcmOptions: { link: url },
-          }
-        : undefined,
+      notification: {
+        title,
+        body,
+        ...(opts.imageUrl ? { imageUrl: opts.imageUrl } : {}),
+      },
+      data: dataPayload,
+      android: {
+        priority: 'high',
+        notification: {
+          channelId: isUrgente ? 'comunicados_urgentes' : 'comunicados_generales',
+          sound: 'default',
+          clickAction: 'OPEN_COMUNICADO',
+          ...(opts.imageUrl ? { imageUrl: opts.imageUrl } : {}),
+        },
+      },
+      apns: {
+        headers: { 'apns-priority': '10' },
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+            contentAvailable: true,
+          },
+        },
+        ...(opts.imageUrl ? { fcmOptions: { imageUrl: opts.imageUrl } } : {}),
+      },
+      webpush: {
+        fcmOptions: { link: url },
+        notification: {
+          requireInteraction: isUrgente,
+          ...(opts.imageUrl ? { image: opts.imageUrl } : {}),
+        },
+      },
     };
 
     return this.messaging.send(message);
   }
 
-  // Envío en lotes de hasta 500 destinatarios con limpieza de tokens caducados
-  private async sendMulticast(tokens: string[], title: string, body: string, url?: string): Promise<MulticastResult> {
+  // Envío en lotes de hasta 500 destinatarios con payload nativo especializado (Web, Android, iOS)
+  private async sendMulticast(
+    tokens: string[],
+    title: string,
+    body: string,
+    options?: PushNotificationOptions | string,
+  ): Promise<MulticastResult> {
     let successCount = 0;
     let failureCount = 0;
+
+    const opts = typeof options === 'string' ? { url: options } : (options ?? {});
+    const url = opts.url ?? '/dashboard';
+    const isUrgente = opts.prioridad === 'URGENTE';
+
+    const dataPayload: Record<string, string> = {
+      title,
+      body,
+      url,
+      prioridad: opts.prioridad ?? 'NORMAL',
+      click_action: 'FLUTTER_NOTIFICATION_CLICK',
+      ...(opts.imageUrl ? { imageUrl: opts.imageUrl } : {}),
+      ...(opts.idComunicado ? { idComunicado: opts.idComunicado } : {}),
+      ...(opts.codigo ? { codigo: opts.codigo } : {}),
+      ...(opts.data ?? {}),
+    };
 
     for (let i = 0; i < tokens.length; i += 500) {
       const batch = tokens.slice(i, i + 500);
@@ -129,10 +283,43 @@ export class NotificationsService {
           notification: {
             title,
             body,
+            ...(opts.imageUrl ? { imageUrl: opts.imageUrl } : {}),
           },
-          data: url ? { url } : {},
+          data: dataPayload,
+          // Configuración nativa para Android (sonido, canales de prioridad, deep linking, imagen)
+          android: {
+            priority: 'high',
+            notification: {
+              channelId: isUrgente ? 'comunicados_urgentes' : 'comunicados_generales',
+              sound: 'default',
+              notificationCount: 1,
+              clickAction: 'OPEN_COMUNICADO',
+              ...(opts.imageUrl ? { imageUrl: opts.imageUrl } : {}),
+            },
+          },
+          // Configuración nativa para iOS (APNs vía Apple Push Notification service con imagen)
+          apns: {
+            headers: {
+              'apns-priority': '10',
+            },
+            payload: {
+              aps: {
+                sound: 'default',
+                badge: 1,
+                contentAvailable: true,
+              },
+            },
+            ...(opts.imageUrl ? { fcmOptions: { imageUrl: opts.imageUrl } } : {}),
+          },
+          // Configuración nativa para Web Push (Service Worker con imagen de banner)
           webpush: {
-            fcmOptions: url ? { link: url } : undefined,
+            fcmOptions: {
+              link: url,
+            },
+            notification: {
+              requireInteraction: isUrgente,
+              ...(opts.imageUrl ? { image: opts.imageUrl } : {}),
+            },
           },
         });
 
