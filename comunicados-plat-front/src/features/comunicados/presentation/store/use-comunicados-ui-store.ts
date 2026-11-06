@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import type { RolEmisorSimulado } from '../../domain/models/jerarquia-alcance.rules';
 import type { ModalidadComunicado } from '../../domain/models/comunicado.model';
 
 export type ComunicadosSubTab = 'listado' | 'redactar';
@@ -10,7 +9,6 @@ interface ComunicadosUiState {
   searchQuery: string;
   selectedEstado: string;
   selectedPrioridad: string;
-  simulatedRole: RolEmisorSimulado;
   viewerComunicadoId: string | null;
   statsComunicadoId: string | null;
 
@@ -19,7 +17,6 @@ interface ComunicadosUiState {
   setSearchQuery: (query: string) => void;
   setSelectedEstado: (estado: string) => void;
   setSelectedPrioridad: (prioridad: string) => void;
-  setSimulatedRole: (role: RolEmisorSimulado) => void;
   openViewer: (id: string) => void;
   closeViewer: () => void;
   openStats: (id: string) => void;
@@ -32,7 +29,6 @@ export const useComunicadosUiStore = create<ComunicadosUiState>((set) => ({
   searchQuery: '',
   selectedEstado: 'TODOS',
   selectedPrioridad: 'TODAS',
-  simulatedRole: 'ceo',
   viewerComunicadoId: null,
   statsComunicadoId: null,
 
@@ -41,7 +37,6 @@ export const useComunicadosUiStore = create<ComunicadosUiState>((set) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setSelectedEstado: (selectedEstado) => set({ selectedEstado }),
   setSelectedPrioridad: (selectedPrioridad) => set({ selectedPrioridad }),
-  setSimulatedRole: (simulatedRole) => set({ simulatedRole }),
   openViewer: (viewerComunicadoId) => set({ viewerComunicadoId }),
   closeViewer: () => set({ viewerComunicadoId: null }),
   openStats: (statsComunicadoId) => set({ statsComunicadoId }),

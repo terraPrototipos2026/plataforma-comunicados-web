@@ -10,6 +10,8 @@ import { RolesModule } from './modules/roles/roles.module.js';
 import { SucursalesModule } from './modules/sucursales/sucursales.module.js';
 import { UsuariosModule } from './modules/usuarios/usuarios.module.js';
 import { ComunicadosModule } from './modules/comunicados/comunicados.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { FirebaseModule } from './shared/infrastructure/firebase/firebase.module.js';
 
 @Module({
   imports: [
@@ -17,6 +19,7 @@ import { ComunicadosModule } from './modules/comunicados/comunicados.module.js';
       isGlobal: true,
     }),
     PrismaModule,
+    FirebaseModule,
     AuthModule,
     DepartamentosModule,
     PermisosModule,
@@ -24,6 +27,7 @@ import { ComunicadosModule } from './modules/comunicados/comunicados.module.js';
     SucursalesModule,
     UsuariosModule,
     ComunicadosModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

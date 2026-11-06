@@ -1,6 +1,7 @@
 import { type PrismaClient } from '@prisma/client';
 
 export async function seedComunicados(prisma: PrismaClient) {
+  const p = prisma as any;
   console.log('🌱 Sembrando catálogo oficial de comunicados...');
 
   // Asegurar autores
@@ -145,10 +146,10 @@ export async function seedComunicados(prisma: PrismaClient) {
   ];
 
   for (const c of comunicadosData) {
-    const existing = await prisma.comunicado.findUnique({ where: { codigo: c.codigo } });
+    const existing = await p.comunicado.findUnique({ where: { codigo: c.codigo } });
     if (existing) continue;
 
-    const created = await prisma.comunicado.create({
+    const created = await p.comunicado.create({
       data: {
         codigo: c.codigo,
         titulo: c.titulo,
@@ -193,7 +194,7 @@ export async function seedComunicados(prisma: PrismaClient) {
     for (let i = 0; i < targetCount; i++) {
       const u = sampleUsers[i];
       const isConfirmed = i < confirmedCount;
-      await prisma.comunicadoDestinatario.create({
+      await p.comunicadoDestinatario.create({
         data: {
           idComunicado: created.idComunicado,
           idUsuario: u.idUsuario,

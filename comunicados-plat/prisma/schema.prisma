@@ -70,6 +70,7 @@ model Usuario {
   sesiones       Sesion[]
   comunicadosEmitidos  Comunicado[]             @relation("UsuarioGeneraComunicados")
   comunicadosRecibidos ComunicadoDestinatario[] @relation("UsuarioRecibeComunicados")
+  dispositivosPush     PushDevice[]
 
   @@index([idRol])
   @@index([idDepartamento])
@@ -175,5 +176,19 @@ model Notificacion {
 
   @@index([idComunicado])
   @@map("notificacion")
+}
+
+model PushDevice {
+  id        String   @id @default(uuid()) @db.Uuid
+  idUsuario String   @map("id_usuario") @db.Uuid
+  token     String   @unique @db.Text
+  platform  String   @default("web") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  usuario   Usuario  @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade)
+
+  @@index([idUsuario])
+  @@map("push_devices")
 }
 

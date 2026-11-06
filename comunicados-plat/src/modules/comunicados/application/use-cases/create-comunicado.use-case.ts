@@ -2,6 +2,7 @@ import { Inject, Injectable, BadRequestException } from '@nestjs/common';
 import { COMUNICADO_REPOSITORY_TOKEN } from '../../infrastructure/tokens.js';
 import type { ComunicadoRepositoryPort } from '../../domain/ports/comunicado.repository.port.js';
 import { JerarquiaEmisorPolicy } from '../../domain/services/jerarquia-emisor.policy.js';
+import { NotificationsService } from '../../../notifications/infrastructure/notifications.service.js';
 import type { CreateComunicadoInput } from '../dtos/comunicado.dto.js';
 import type { Comunicado } from '../../domain/entities/comunicado.entity.js';
 
@@ -10,6 +11,7 @@ export class CreateComunicadoUseCase {
   constructor(
     @Inject(COMUNICADO_REPOSITORY_TOKEN)
     private readonly repository: ComunicadoRepositoryPort,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async execute(input: CreateComunicadoInput): Promise<Comunicado> {
@@ -66,7 +68,7 @@ export class CreateComunicadoUseCase {
     const fechaProgramada = input.fechaProgramada ? new Date(input.fechaProgramada) : null;
     const fechaPublicacion = estado === 'PROGRAMADO' ? null : new Date();
 
-    return this.repository.create({
+    const created = await this.repository.create({
       codigo,
       titulo: input.titulo.trim(),
       extracto: input.extracto?.trim() ?? null,
@@ -81,6 +83,22 @@ export class CreateComunicadoUseCase {
       imagenes: imagenesData,
       destinatarioIds: targetUserIds,
     });
+
+    // Notificar en background vía Firebase Push a los colaboradores destinatarios
+    if (created.estado === 'PUBLICADO' && targetUserIds.length > 0) {
+      this.notificationsService
+        .sendToMultipleUsers(
+          targetUserIds,
+          `Nuevo Comunicado: ${created.titulo}`,
+          created.extracto || 'Se ha publicado un nuevo comunicado oficial.',
+          `/dashboard`,
+        )
+        .catch((err) => {
+          console.warn('⚠️ Error al enviar notificaciones push del comunicado:', err);
+        });
+    }
+
+    return created;
   }
 }
 

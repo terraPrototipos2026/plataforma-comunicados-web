@@ -5,11 +5,15 @@ import {
   CheckCircle2,
   Clock,
   ShieldCheck,
-  Store,
+  Building2,
+  Calendar,
+  User,
+  Activity,
 } from 'lucide-react';
 import { SlideFadeTransition } from '../../../../shared/components/slide-fade-transition';
 import { useComunicadoDetailQuery } from '../hooks/use-comunicados-query';
 import { useComunicadosUiStore } from '../store/use-comunicados-ui-store';
+import { ComunicadoRules } from '../../domain/models/comunicado.model';
 
 export function ComunicadoStatsDrawer() {
   const statsComunicadoId = useComunicadosUiStore((state) => state.statsComunicadoId);
@@ -105,25 +109,48 @@ export function ComunicadoStatsDrawer() {
             </div>
           </div>
 
-          {/* Desglose por Sedes y Departamentos */}
+          {/* Ficha Técnica y Distribución Real */}
           <div className="flex flex-col gap-2.5">
             <span className="text-xs font-extrabold uppercase tracking-wider text-texto-suave flex items-center gap-1.5">
-              <Store className="w-3.5 h-3.5 text-primario" />
-              <span>Desglose por Sede Corporativa</span>
+              <Activity className="w-3.5 h-3.5 text-primario" />
+              <span>Detalles del Despacho Oficial</span>
             </span>
 
             <div className="space-y-2">
               <div className="p-3 rounded-terra-chico bg-superficie-2 border border-borde-suave flex items-center justify-between text-xs">
-                <span className="font-bold text-texto-principal">Casa Central</span>
-                <span className="font-semibold text-exito">92% confirmado</span>
+                <span className="font-bold text-texto-principal flex items-center gap-2">
+                  <Building2 className="w-3.5 h-3.5 text-texto-placeholder" />
+                  <span>Alcance</span>
+                </span>
+                <span className="font-semibold text-texto-principal">
+                  {comunicado ? ComunicadoRules.formatAlcanceLabel(comunicado.tipoAlcance) : 'Cargando...'}
+                </span>
               </div>
+
               <div className="p-3 rounded-terra-chico bg-superficie-2 border border-borde-suave flex items-center justify-between text-xs">
-                <span className="font-bold text-texto-principal">Planta Industrial</span>
-                <span className="font-semibold text-texto-principal">76% confirmado</span>
+                <span className="font-bold text-texto-principal flex items-center gap-2">
+                  <User className="w-3.5 h-3.5 text-texto-placeholder" />
+                  <span>Autor</span>
+                </span>
+                <span className="font-semibold text-texto-principal">
+                  {comunicado?.autorNombre ?? 'No especificado'}
+                </span>
               </div>
+
               <div className="p-3 rounded-terra-chico bg-superficie-2 border border-borde-suave flex items-center justify-between text-xs">
-                <span className="font-bold text-texto-principal">Salas de Exposición</span>
-                <span className="font-semibold text-texto-principal">84% confirmado</span>
+                <span className="font-bold text-texto-principal flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5 text-texto-placeholder" />
+                  <span>Fecha de Emisión</span>
+                </span>
+                <span className="font-semibold text-texto-principal">
+                  {comunicado?.fechaPublicacion
+                    ? new Date(comunicado.fechaPublicacion).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                    : 'Borrador'}
+                </span>
               </div>
             </div>
           </div>

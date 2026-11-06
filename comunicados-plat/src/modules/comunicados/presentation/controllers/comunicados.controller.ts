@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -10,11 +11,18 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'node:path';
+import * as fs from 'node:fs';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -63,6 +71,59 @@ export class ComunicadosController {
   })
   async estimarAlcance(@Body() dto: EstimarAlcanceRequestDto) {
     return this.estimarAlcanceUseCase.execute(dto);
+  }
+
+  @Post('upload')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Subir archivo institucional (imagen o PDF)',
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (
+          _req: unknown,
+          _file: unknown,
+          cb: (error: Error | null, destination: string) => void,
+        ) => {
+          const uploadDir = './uploads';
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          cb(null, uploadDir);
+        },
+        filename: (
+          _req: unknown,
+          file: { originalname: string },
+          cb: (error: Error | null, filename: string) => void,
+        ) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+          cb(null, `${uniqueSuffix}-${safeName}`);
+        },
+      }),
+      limits: {
+        fileSize: 25 * 1024 * 1024,
+      },
+    }),
+  )
+  uploadFile(@UploadedFile() file?: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No se ha proporcionado ningún archivo para subir.');
+    }
+
+    const host = process.env.API_BASE_URL || 'http://localhost:3000';
+    const fileUrl = `${host}/uploads/${file.filename}`;
+
+    return {
+      url: fileUrl,
+      nombreOriginal: file.originalname,
+      tamanoBytes: file.size,
+      mimetype: file.mimetype,
+    };
   }
 
   @Get(':id')

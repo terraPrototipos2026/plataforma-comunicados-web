@@ -195,17 +195,35 @@ export class ComunicadoPrismaRepository implements ComunicadoRepositoryPort {
   async estimarAlcance(data: EstimarAlcanceData): Promise<EstimarAlcanceResult> {
     let users = [];
 
-    if (data.tipoAlcance === 'TODA_EMPRESA') {
-      users = await this.prisma.usuario.findMany({
-        select: { idUsuario: true, idDepartamento: true, departamento: { select: { idSucursal: true } } },
-      });
-    } else if (data.tipoAlcance === 'POR_SUCURSAL' && data.sucursalIds && data.sucursalIds.length > 0) {
+    if (data.tipoAlcance === 'NOMINATIVO' && data.usuarioIds && data.usuarioIds.length > 0) {
       users = await this.prisma.usuario.findMany({
         where: {
-          departamento: {
-            idSucursal: { in: data.sucursalIds },
+          idUsuario: { in: data.usuarioIds },
+        },
+        select: { idUsuario: true, idDepartamento: true, departamento: { select: { idSucursal: true } } },
+      });
+    } else if (data.tipoAlcance === 'ENCARGADOS_AREA') {
+      const whereClause: Record<string, unknown> = {
+        rol: {
+          nombre: {
+            in: [
+              'encargado de area',
+              'encargado de área',
+              'jefe de operaciones',
+              'gerente de sucursal',
+              'gerente sucursal',
+              'administrador general',
+            ],
           },
         },
+      };
+      if (data.departamentoIds && data.departamentoIds.length > 0) {
+        whereClause.idDepartamento = { in: data.departamentoIds };
+      } else if (data.sucursalIds && data.sucursalIds.length > 0) {
+        whereClause.departamento = { idSucursal: { in: data.sucursalIds } };
+      }
+      users = await this.prisma.usuario.findMany({
+        where: whereClause,
         select: { idUsuario: true, idDepartamento: true, departamento: { select: { idSucursal: true } } },
       });
     } else if (data.tipoAlcance === 'POR_DEPARTAMENTO' && data.departamentoIds && data.departamentoIds.length > 0) {
@@ -215,10 +233,12 @@ export class ComunicadoPrismaRepository implements ComunicadoRepositoryPort {
         },
         select: { idUsuario: true, idDepartamento: true, departamento: { select: { idSucursal: true } } },
       });
-    } else if (data.tipoAlcance === 'NOMINATIVO' && data.usuarioIds && data.usuarioIds.length > 0) {
+    } else if (data.tipoAlcance === 'POR_SUCURSAL' && data.sucursalIds && data.sucursalIds.length > 0) {
       users = await this.prisma.usuario.findMany({
         where: {
-          idUsuario: { in: data.usuarioIds },
+          departamento: {
+            idSucursal: { in: data.sucursalIds },
+          },
         },
         select: { idUsuario: true, idDepartamento: true, departamento: { select: { idSucursal: true } } },
       });

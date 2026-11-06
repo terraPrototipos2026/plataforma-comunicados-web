@@ -1,11 +1,11 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { seedSucursales } from './seeds/sucursales.seed.ts';
-import { seedRoles } from './seeds/roles.seed.ts';
-import { seedDepartamentos } from './seeds/departamentos.seed.ts';
-import { seedAdminUser } from './seeds/admin-user.seed.ts';
-import { seedComunicados } from './seeds/comunicados.seed.ts';
+import { seedSucursales } from './seeds/sucursales.seed.js';
+import { seedRoles } from './seeds/roles.seed.js';
+import { seedDepartamentos } from './seeds/departamentos.seed.js';
+import { seedAdminUser } from './seeds/admin-user.seed.js';
+import { seedComunicados } from './seeds/comunicados.seed.js';
 
 const connectionString = process.env.DATABASE_URL;
 const adapter = new PrismaPg({ connectionString });
@@ -13,7 +13,7 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱 [SEED] Iniciando carga de datos iniciales...');
-  
+
   await seedSucursales(prisma);
   await seedRoles(prisma);
   await seedDepartamentos(prisma);
